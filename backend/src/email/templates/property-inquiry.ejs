@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Property Inquiry</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00A86B;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #00A86B;
+            margin-top: 0;
+        }
+        .property-box {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #00A86B;
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: #f0f7ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .message-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #00A86B;
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+        .contact-info {
+            margin: 10px 0;
+        }
+        .contact-info strong {
+            color: #00A86B;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #00A86B;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏠 bayut</div>
+        </div>
+        
+        <h1>New Property Inquiry</h1>
+        
+        <div class="content">
+            <p>You have received a new inquiry for your property listing.</p>
+            
+            <div class="property-box">
+                <h2 style="margin-top: 0; color: #333;">Property: <%= propertyTitle %></h2>
+            </div>
+            
+            <h3 style="color: #00A86B;">Inquirer Details:</h3>
+            <div class="info-box">
+                <div class="contact-info">
+                    <strong>Name:</strong> <%= inquirerName %>
+                </div>
+                <div class="contact-info">
+                    <strong>Email:</strong> <a href="mailto:<%= inquirerEmail %>"><%= inquirerEmail %></a>
+                </div>
+                <% if (inquirerPhone) { %>
+                <div class="contact-info">
+                    <strong>Phone:</strong> <a href="tel:<%= inquirerPhone %>"><%= inquirerPhone %></a>
+                </div>
+                <% } %>
+            </div>
+            
+            <h3 style="color: #00A86B;">Message:</h3>
+            <div class="message-box">
+                <%= message %>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="mailto:<%= inquirerEmail %>?subject=Re: Inquiry about <%= propertyTitle %>" class="button">Reply to Inquirer</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>You can reply directly to this email to contact the inquirer.</p>
+            <p>Best regards,<br>The Bayut Clone Team</p>
+        </div>
+    </div>
+</body>
+</html>
+

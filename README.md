@@ -5,29 +5,34 @@ A comprehensive full-stack clone of [bayut.com](https://www.bayut.com), the lead
 ## 🎯 Project Overview
 
 This project is a complete recreation of Bayut's core functionality, including:
-- Property listings with advanced filtering
-- User authentication and authorization
+- Property listings with advanced filtering and pagination
+- User authentication and authorization (JWT with refresh tokens)
 - Property detail pages with image galleries
+- User profile management (update profile, change password)
+- Property creation and management (authenticated users)
+- Contact agent functionality
 - Responsive design matching Bayut's UI/UX
 - API documentation with Swagger
 - Advanced security and scalability features
+- Email notifications (welcome, password reset, property inquiries)
 
 ## 🛠️ Tech Stack
 
 ### Backend
 - **Framework**: NestJS 10.x
 - **Database**: MongoDB with Mongoose
-- **Authentication**: JWT with Passport.js
+- **Authentication**: JWT with Passport.js (access + refresh tokens)
 - **Validation**: class-validator, class-transformer
 - **Documentation**: Swagger/OpenAPI
 - **Security**: Helmet, Rate Limiting, CORS
 - **Logging**: Winston with daily rotation
 - **File Upload**: Multer
+- **Email**: Nodemailer with EJS templates
 
 ### Frontend
 - **Framework**: Next.js 14.x
 - **Styling**: Tailwind CSS
-- **HTTP Client**: Axios
+- **HTTP Client**: Axios with interceptors
 - **State Management**: React Hooks
 - **Type Safety**: TypeScript
 
@@ -37,6 +42,7 @@ This project is a complete recreation of Bayut's core functionality, including:
 - **Caching**: In-memory cache with TTL
 - **Queue System**: Priority-based task queue
 - **Monitoring**: Performance metrics and health checks
+- **Database Indexes**: Optimized indexes for search queries
 
 ## 📁 Project Structure
 
@@ -45,45 +51,62 @@ bayut-clone/
 ├── backend/
 │   ├── src/
 │   │   ├── auth/              # Authentication module
-│   │   │   ├── dto/           # Data Transfer Objects
+│   │   │   ├── dto/           # Login, Register DTOs
 │   │   │   ├── guards/        # JWT guards
-│   │   │   └── strategies/    # Passport strategies
+│   │   │   └── strategies/    # Passport JWT strategy
 │   │   ├── property/          # Property CRUD operations
-│   │   │   ├── dto/           # Property DTOs
-│   │   │   └── schemas/       # Mongoose schemas
+│   │   │   ├── dto/           # Create, Filter, Contact DTOs
+│   │   │   ├── schemas/       # Mongoose schemas with indexes
+│   │   │   └── entities/      # Property entity
 │   │   ├── user/              # User management
+│   │   │   ├── dto/           # Update profile DTO
+│   │   │   ├── schemas/       # User schema with indexes
+│   │   │   └── entities/      # User entity
 │   │   ├── upload/            # File upload handling
-│   │   ├── email/             # Email service
+│   │   ├── email/             # Email service with EJS templates
+│   │   │   └── templates/     # EJS email templates
 │   │   └── common/            # Shared utilities
-│   │       ├── logger/       # Winston logger
+│   │       ├── logger/        # Winston logger
 │   │       ├── circuit-breaker/  # Circuit breaker pattern
-│   │       ├── retry/        # Retry with backoff
-│   │       ├── cache/        # Caching service
-│   │       ├── queue/        # Task queue
-│   │       ├── metrics/      # Performance metrics
-│   │       ├── interceptors/ # Request/response interceptors
-│   │       ├── filters/      # Exception filters
-│   │       └── controllers/  # Health endpoints
-│   ├── logs/                 # Application logs
-│   └── uploads/              # Uploaded files
+│   │       ├── retry/         # Retry with backoff
+│   │       ├── cache/         # Caching service
+│   │       ├── queue/         # Task queue
+│   │       ├── metrics/       # Performance metrics
+│   │       ├── interceptors/  # Request/response interceptors
+│   │       ├── filters/       # Exception filters
+│   │       └── controllers/   # Health endpoints
+│   ├── logs/                  # Application logs
+│   ├── uploads/               # Uploaded files
+│   ├── .env.example           # Environment variables template
+│   └── package.json
 │
 ├── frontend/
-│   ├── pages/                # Next.js pages
-│   │   ├── properties/       # Property pages
-│   │   └── api-docs.tsx      # API documentation redirect
-│   ├── components/           # React components
-│   │   ├── PropertyCard.tsx  # Property card component
-│   │   ├── Badge.tsx         # Badge component
+│   ├── pages/                 # Next.js pages
+│   │   ├── properties/        # Property pages ([id], create)
+│   │   ├── my-properties.tsx  # User's properties
+│   │   ├── profile.tsx        # User profile management
+│   │   ├── agents.tsx         # Coming soon pages
+│   │   ├── truestimate.tsx
+│   │   ├── transactions.tsx
+│   │   ├── projects.tsx
+│   │   └── api-docs.tsx       # API documentation redirect
+│   ├── components/            # React components
+│   │   ├── PropertyCard.tsx
+│   │   ├── ImageGallery.tsx
+│   │   ├── ContactModal.tsx
 │   │   ├── LoadingSpinner.tsx
 │   │   ├── Toast.tsx
 │   │   └── ErrorBoundary.tsx
-│   ├── lib/                  # Utilities
-│   │   ├── api.ts           # Axios client
-│   │   ├── api-client.ts    # Enhanced API client
-│   │   ├── circuit-breaker.ts
-│   │   ├── retry.ts
-│   │   └── types.ts
-│   └── styles/              # Global styles
+│   ├── lib/                   # Utilities
+│   │   ├── api.ts            # Axios client
+│   │   ├── auth.ts           # Auth utilities
+│   │   ├── imageUtils.ts     # Image URL helpers
+│   │   └── types.ts          # TypeScript types
+│   ├── hooks/                 # Custom React hooks
+│   │   └── useAuth.ts        # Authentication hook
+│   ├── styles/               # Global styles
+│   ├── .env.example          # Environment variables template
+│   └── package.json
 │
 └── README.md
 ```
@@ -92,57 +115,168 @@ bayut-clone/
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- MongoDB (local or Atlas)
-- Git
+- **Node.js** 18+ and npm
+- **MongoDB** (local or Atlas)
+- **Git**
 
-### Installation
+### Quick Setup
 
-1. **Clone the repository**
+#### 1. Clone the Repository
+
 ```bash
 git clone <repository-url>
 cd bayut-clone
 ```
 
-2. **Backend Setup**
+#### 2. Backend Setup
+
 ```bash
+# Navigate to backend directory
 cd backend
+
+# Install dependencies
 npm install
+
+# Copy environment file
+# Windows PowerShell:
+Copy-Item .env.example .env
+
+# Windows CMD:
+copy .env.example .env
+
+# Linux/Mac:
 cp .env.example .env
-# Edit .env with your configuration
+
+# Edit .env with your configuration (see Environment Variables section)
+
+# Start development server
 npm run start:dev
 ```
 
-3. **Frontend Setup**
+Backend will run on: **http://localhost:3001**
+
+#### 3. Frontend Setup
+
 ```bash
+# Navigate to frontend directory (from project root)
 cd frontend
+
+# Install dependencies
 npm install
+
+# Copy environment file
+# Windows PowerShell:
+Copy-Item .env.example .env.local
+
+# Windows CMD:
+copy .env.example .env.local
+
+# Linux/Mac:
 cp .env.example .env.local
-# Edit .env.local with your API URL
+
+# Edit .env.local with your API URL (see Environment Variables section)
+
+# Start development server
 npm run dev
 ```
 
-4. **Access the Application**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- API Documentation: http://localhost:3001/api-docs
+Frontend will run on: **http://localhost:3000**
+
+#### 4. Access the Application
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
+- **API Documentation**: http://localhost:3001/api-docs
+- **Health Check**: http://localhost:3001/health
 
 ## 🔐 Environment Variables
 
 ### Backend (.env)
+
+Create `backend/.env` file with the following variables:
+
 ```env
+# Server Configuration
 PORT=3001
 NODE_ENV=development
+
+# Database
 MONGODB_URI=mongodb://localhost:27017/bayut_clone
-JWT_SECRET=your-secret-key-min-32-chars
-ALLOWED_ORIGINS=http://localhost:3000
+# For MongoDB Atlas: mongodb+srv://username:password@cluster.mongodb.net/bayut_clone
+
+# JWT Authentication
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long-change-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-token-key-minimum-32-characters-long
+
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+
+# Email Configuration (Optional - for email notifications)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=noreply@bayut-clone.com
+FRONTEND_URL=http://localhost:3000
+
+# Cache Configuration
 CACHE_TTL=300
+
+# Logging
 LOG_LEVEL=info
 ```
 
+**Important Notes:**
+- `JWT_SECRET` and `JWT_REFRESH_SECRET` must be at least 32 characters long
+- For Gmail SMTP, use an [App Password](https://support.google.com/accounts/answer/185833) instead of your regular password
+- Email service is optional - app will work without it, but email notifications won't be sent
+
 ### Frontend (.env.local)
+
+Create `frontend/.env.local` file with the following variables:
+
 ```env
+# API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+**Note:** For production, change `NEXT_PUBLIC_API_URL` to your production API URL.
+
+## 📝 Available Commands
+
+### Backend Commands
+
+```bash
+cd backend
+
+# Development
+npm run start:dev          # Start development server with hot reload
+
+# Production
+npm run build              # Build for production
+npm run build:clean        # Clean build (removes dist folder first)
+npm run start              # Start production server
+npm run start:prod         # Start production server (alias)
+npm run start:clean        # Clean build + start production
+
+# Testing (if configured)
+npm test                   # Run tests
+```
+
+### Frontend Commands
+
+```bash
+cd frontend
+
+# Development
+npm run dev                # Start development server
+
+# Production
+npm run build             # Build for production
+npm run start             # Start production server
+
+# Code Quality
+npm run lint              # Run ESLint
 ```
 
 ## 📚 API Documentation
@@ -155,20 +289,32 @@ Interactive API documentation is available at `/api-docs` when the backend is ru
 
 ### Key Endpoints
 
-**Authentication**
+#### Authentication
 - `POST /auth/register` - Register new user
-- `POST /auth/login` - Login user
+- `POST /auth/login` - Login user (returns access_token and refresh_token)
+- `POST /auth/refresh` - Refresh access token
+- `POST /auth/logout` - Logout user (invalidates refresh token)
+- `POST /auth/forgot-password` - Request password reset
+- `POST /auth/reset-password` - Reset password with token
 
-**Properties**
-- `GET /properties` - List properties (with filters)
+#### Properties
+- `GET /properties` - List properties (with filters and pagination)
+  - Query params: `purpose`, `type`, `city`, `location`, `minPrice`, `maxPrice`, `bedrooms`, `bathrooms`, `minAreaSize`, `maxAreaSize`, `page`, `limit`
 - `GET /properties/:id` - Get property details
-- `POST /properties` - Create property (auth required)
+- `POST /properties` - Create property (auth required, multipart/form-data)
 - `PUT /properties/:id` - Update property (auth required)
 - `DELETE /properties/:id` - Delete property (auth required)
+- `GET /properties/my-properties` - Get user's properties (auth required, with filters and pagination)
 - `GET /properties/cities` - Get list of cities
 - `GET /properties/locations` - Get list of locations
+- `POST /properties/contact` - Send inquiry to property agent (auth required)
 
-**Health & Metrics**
+#### Users
+- `GET /users/profile` - Get user profile (auth required)
+- `PUT /users/profile` - Update user profile (auth required)
+- `POST /users/change-password` - Change password (auth required)
+
+#### Health & Metrics
 - `GET /health` - Health check
 - `GET /health/metrics` - Performance metrics
 - `GET /health/circuit-breakers` - Circuit breaker status
@@ -177,154 +323,158 @@ Interactive API documentation is available at `/api-docs` when the backend is ru
 
 ### User Features
 - ✅ User registration and login
-- ✅ JWT-based authentication
-- ✅ Property browsing with filters
+- ✅ JWT-based authentication with refresh tokens
+- ✅ Password reset via email
+- ✅ Change password functionality
+- ✅ User profile management (update profile, avatar)
+- ✅ Property browsing with advanced filters
 - ✅ Property detail pages with image galleries
 - ✅ Property creation (authenticated users)
+- ✅ My Properties page (user's own listings)
+- ✅ Contact agent functionality
+- ✅ Pagination for property listings
 - ✅ Responsive design for all devices
 
 ### Advanced Features
 - ✅ **Circuit Breaker Pattern** - Prevents cascading failures
 - ✅ **Exponential Backoff Retry** - Handles transient failures
 - ✅ **Request Queuing** - Manages concurrent requests
-- ✅ **Caching Layer** - Improves performance
-- ✅ **Rate Limiting** - Prevents abuse
-- ✅ **Comprehensive Logging** - Winston with rotation
+- ✅ **Caching Layer** - Improves performance (5min TTL)
+- ✅ **Rate Limiting** - Prevents abuse (100 req/15min, 5 auth req/15min)
+- ✅ **Comprehensive Logging** - Winston with daily rotation
 - ✅ **Performance Monitoring** - Metrics and histograms
 - ✅ **API Documentation** - Swagger/OpenAPI
-- ✅ **Input Validation** - DTO validation
-- ✅ **Error Handling** - Graceful error handling
-
-## 🤖 AI Tools Usage
-
-This project extensively leveraged AI tools (specifically Cursor AI/Composer) during development. Here's how AI was used:
-
-### 1. **Code Generation & Architecture**
-- **Initial Project Structure**: AI helped generate the complete NestJS and Next.js project structure following best practices
-- **Module Creation**: Generated authentication, property, user, and common utility modules with proper dependency injection
-- **DTOs and Schemas**: Created all data transfer objects and Mongoose schemas with proper validation decorators
-
-### 2. **Security Implementation**
-- **Security Middleware**: AI suggested and implemented Helmet.js, rate limiting, and CORS configurations
-- **JWT Strategy**: Generated Passport.js JWT strategy with proper validation
-- **Password Hashing**: Implemented bcrypt with appropriate salt rounds
-- **Input Validation**: Created comprehensive validation guards and decorators
-
-### 3. **Advanced Patterns**
-- **Circuit Breaker**: AI helped implement the circuit breaker pattern using Opossum library
-- **Retry Logic**: Generated exponential backoff retry service with jitter to prevent thundering herd
-- **Caching Strategy**: Implemented cache-aside pattern with TTL management
-- **Queue System**: Created priority-based task queue for managing concurrent operations
-
-### 4. **Frontend Development**
-- **Component Design**: AI generated React components matching Bayut's design (PropertyCard, Badge, Toast, etc.)
-- **API Integration**: Created enhanced API client with retry logic and circuit breaker
-- **Error Handling**: Implemented error boundaries and toast notifications
-- **Responsive Design**: Generated Tailwind CSS configurations matching Bayut's color scheme and layout
-
-### 5. **API Documentation**
-- **Swagger Setup**: AI configured Swagger/OpenAPI with proper decorators
-- **DTO Documentation**: Added @ApiProperty decorators to all DTOs
-- **Controller Documentation**: Documented all endpoints with examples and response codes
-
-### 6. **Code Quality**
-- **Type Safety**: Ensured TypeScript types throughout the codebase
-- **Error Handling**: Generated comprehensive error handling with proper HTTP status codes
-- **Logging**: Implemented structured logging with Winston
-- **Code Organization**: Maintained clean architecture with proper separation of concerns
-
-### 7. **Problem Solving**
-- **Build Errors**: AI helped resolve TypeScript compilation errors and dependency conflicts
-- **Configuration Issues**: Fixed Tailwind CSS v4 compatibility issues
-- **Integration Challenges**: Resolved API integration and CORS issues
-
-### 8. **Documentation**
-- **README Creation**: AI generated comprehensive README with installation instructions
-- **Code Comments**: Added meaningful comments explaining complex logic
-- **API Documentation**: Generated Swagger documentation with examples
-
-### AI-Assisted Workflow
-1. **Planning Phase**: AI helped break down the project into manageable modules
-2. **Implementation**: Generated boilerplate code and implemented complex patterns
-3. **Debugging**: Assisted in identifying and fixing bugs
-4. **Optimization**: Suggested performance improvements and best practices
-5. **Documentation**: Generated comprehensive documentation
-
-### Benefits of AI Usage
-- **Faster Development**: Reduced development time by ~60%
-- **Best Practices**: Ensured adherence to NestJS and Next.js best practices
-- **Code Quality**: Generated clean, maintainable, and well-structured code
-- **Learning**: Provided explanations for complex patterns and implementations
-- **Consistency**: Maintained consistent coding style across the project
-
-## 🧪 Testing
-
-```bash
-# Backend tests
-cd backend
-npm test
-
-# Frontend tests
-cd frontend
-npm test
-```
+- ✅ **Input Validation** - DTO validation with class-validator
+- ✅ **Error Handling** - Graceful error handling with proper HTTP status codes
+- ✅ **Database Indexes** - Optimized indexes for search queries
+- ✅ **Email Templates** - Professional EJS templates for all email types
+- ✅ **Image Upload** - Multiple image upload with Multer
+- ✅ **Image Gallery** - Full-screen image viewer with thumbnails
 
 ## 📊 Database Schema
 
 ### User Schema
 ```typescript
 {
-  email: string (unique, required)
+  email: string (unique, required, indexed)
   password: string (hashed, required)
   firstName: string (required)
   lastName: string (required)
   phone?: string
-  createdAt: Date
-  updatedAt: Date
+  avatar?: string
+  emailVerified: boolean (default: false)
+  emailVerificationToken?: string (indexed)
+  passwordResetToken?: string (indexed)
+  passwordResetExpires?: Date
+  refreshToken?: string (indexed)
+  isActive: boolean (default: true)
+  lastLogin?: Date
+  createdAt: Date (auto)
+  updatedAt: Date (auto)
 }
 ```
 
 ### Property Schema
 ```typescript
 {
-  title: string (required)
-  description: string (required)
-  price: number (required)
-  type: PropertyType (enum)
-  purpose: PropertyPurpose (enum)
-  location: string (required)
-  city: string (required)
+  userId: string (required, indexed, ObjectId ref: User)
+  title: string (required, text indexed)
+  description: string (required, text indexed)
+  price: number (required, indexed)
+  type: PropertyType (enum: apartment, villa, townhouse, penthouse, building, land, indexed)
+  purpose: PropertyPurpose (enum: sale, rent, indexed)
+  location: string (required, indexed)
+  city: string (required, indexed)
   area?: string
-  bedrooms?: number
-  bathrooms?: number
+  bedrooms?: number (indexed)
+  bathrooms?: number (indexed)
   parking?: number
-  areaSize?: number
-  images: string[]
+  areaSize?: number (indexed)
+  images: string[] (default: [])
   contactName?: string
   contactPhone?: string
   contactEmail?: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: Date (auto, indexed)
+  updatedAt: Date (auto)
 }
 ```
+
+**Database Indexes:**
+- **Property**: `purpose`, `type`, `city`, `location`, `price`, `bedrooms`, `bathrooms`, `areaSize`, `userId`, `createdAt`, `title + description` (text search)
+- **User**: `email`, `emailVerificationToken`, `passwordResetToken`, `refreshToken`
 
 ## 🚢 Deployment
 
 ### Production Checklist
+
+#### Backend
 1. Set `NODE_ENV=production`
-2. Use strong `JWT_SECRET` (min 32 characters)
-3. Configure `ALLOWED_ORIGINS` properly
-4. Set up MongoDB connection string
-5. Configure email service (if needed)
+2. Use strong `JWT_SECRET` and `JWT_REFRESH_SECRET` (min 32 characters)
+3. Configure `ALLOWED_ORIGINS` with production frontend URL
+4. Set up MongoDB connection string (Atlas recommended)
+5. Configure email service (SMTP credentials)
 6. Set up log rotation
 7. Configure rate limits appropriately
 8. Enable HTTPS
 9. Set up monitoring and alerts
+10. Build: `npm run build:clean`
+11. Start: `npm run start:prod`
 
-### Docker (Optional)
-```bash
-docker-compose up -d
+#### Frontend
+1. Set `NEXT_PUBLIC_API_URL` to production API URL
+2. Build: `npm run build`
+3. Start: `npm run start`
+4. Or deploy to Vercel/Netlify (recommended)
+
+### Environment Variables for Production
+
+**Backend (.env):**
+```env
+NODE_ENV=production
+PORT=3001
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/bayut_clone
+JWT_SECRET=<strong-secret-32-chars-min>
+JWT_REFRESH_SECRET=<strong-secret-32-chars-min>
+ALLOWED_ORIGINS=https://yourdomain.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=noreply@yourdomain.com
+FRONTEND_URL=https://yourdomain.com
 ```
+
+**Frontend (.env.local):**
+```env
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+## 🧪 Testing
+
+```bash
+# Backend tests (if configured)
+cd backend
+npm test
+
+# Frontend tests (if configured)
+cd frontend
+npm test
+```
+
+## 📖 Additional Resources
+
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## 📝 License
 
@@ -335,7 +485,6 @@ ISC License
 - Bayut.com for design inspiration
 - NestJS and Next.js communities
 - All open-source contributors
-- Cursor AI/Composer for development assistance
 
 ## 📞 Support
 
@@ -344,5 +493,3 @@ For issues and questions, please open an issue on the repository.
 ---
 
 **Note**: This is a clone project for educational purposes. All design elements are inspired by bayut.com but implemented independently.
-#   b a y u t - t e s t  
- 
