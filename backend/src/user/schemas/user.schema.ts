@@ -47,7 +47,6 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// Search-only indexes for authentication and lookup
 UserSchema.index({ email: 1 });
 UserSchema.index({ emailVerificationToken: 1 });
 UserSchema.index({ passwordResetToken: 1 });

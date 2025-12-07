@@ -42,15 +42,16 @@ export class AuthService {
         registerDto.phone,
       );
 
-      // Send welcome email
-      try {
-        await this.emailService.sendWelcomeEmail(user.email, user.firstName);
-        this.logger.info(`Welcome email sent to: ${user.email}`, {
+      const welcomeEmailResult = await this.emailService.sendWelcomeEmail(user.email, user.firstName);
+      if (welcomeEmailResult) {
+        this.logger.info(`Welcome email sent successfully to: ${user.email}`, {
           context: 'AuthService',
+          emailId: welcomeEmailResult.messageId,
         });
-      } catch (error) {
-        this.logger.error(`Failed to send welcome email to ${user.email}`, error.stack, {
+      } else {
+        this.logger.warn(`Welcome email failed to send to: ${user.email}`, {
           context: 'AuthService',
+          reason: 'SMTP timeout or configuration issue',
         });
       }
 
@@ -153,16 +154,15 @@ export class AuthService {
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.userService.findByEmail(forgotPasswordDto.email);
     if (!user) {
-      // Don't reveal if user exists for security
-      this.logger.info(`Password reset requested for non-existent email: ${forgotPasswordDto.email}`, {
+      this.logger.warn(`Password reset requested for non-existent email: ${forgotPasswordDto.email}`, {
         context: 'AuthService',
       });
-      return { message: 'If the email exists, a password reset link has been sent' };
+      throw new NotFoundException('User with this email address does not exist');
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpires = new Date();
-    resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiry
+    resetExpires.setHours(resetExpires.getHours() + 1);
 
     await this.userService.setPasswordResetToken(
       user._id.toString(),
@@ -170,18 +170,21 @@ export class AuthService {
       resetExpires,
     );
 
-    try {
-      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
-      this.logger.info(`Password reset email sent to: ${user.email}`, {
+    const emailResult = await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    
+    if (emailResult) {
+      this.logger.info(`Password reset email sent successfully to: ${user.email}`, {
         context: 'AuthService',
+        emailId: emailResult.messageId,
       });
-    } catch (error) {
-      this.logger.error(`Failed to send password reset email`, error.stack, {
+      return { message: 'Password reset link has been sent to your email address' };
+    } else {
+      this.logger.error(`Password reset email failed to send to: ${user.email}`, {
         context: 'AuthService',
+        reason: 'SMTP timeout or configuration issue',
       });
+      throw new BadRequestException('Failed to send password reset email. Please try again later or contact support.');
     }
-
-    return { message: 'If the email exists, a password reset link has been sent' };
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {

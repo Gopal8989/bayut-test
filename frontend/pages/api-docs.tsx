@@ -3,7 +3,6 @@ import Head from 'next/head';
 
 export default function ApiDocs() {
   useEffect(() => {
-    // Redirect to Swagger UI using environment variable
     if (typeof window !== 'undefined') {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const swaggerUrl = `${apiUrl}/api-docs`;

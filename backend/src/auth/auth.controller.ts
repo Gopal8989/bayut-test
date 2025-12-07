@@ -111,12 +111,20 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
-    description: 'Send password reset email to user',
+    description: 'Send password reset email to user (only if user exists)',
   })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiResponse({
     status: 200,
-    description: 'Password reset email sent (if email exists)',
+    description: 'Password reset email sent successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User with this email does not exist',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Failed to send email',
   })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);

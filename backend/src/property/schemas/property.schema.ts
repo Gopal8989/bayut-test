@@ -73,7 +73,6 @@ export class Property {
 
 export const PropertySchema = SchemaFactory.createForClass(Property);
 
-// Search-only indexes for filterable/searchable fields
 PropertySchema.index({ purpose: 1 });
 PropertySchema.index({ type: 1 });
 PropertySchema.index({ city: 1 });
@@ -84,7 +83,5 @@ PropertySchema.index({ bathrooms: 1 });
 PropertySchema.index({ areaSize: 1 });
 PropertySchema.index({ userId: 1 });
 PropertySchema.index({ createdAt: -1 });
-
-// Text index for full-text search on title and description
 PropertySchema.index({ title: 'text', description: 'text' });
 

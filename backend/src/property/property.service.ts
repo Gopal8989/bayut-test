@@ -31,7 +31,6 @@ export class PropertyService {
     private retryService: RetryService,
     private metricsService: MetricsService,
   ) {
-    // Initialize circuit breaker for database operations
     this.dbBreaker = this.circuitBreakerService.createCircuitBreaker(
       async (operation: () => Promise<any>) => {
         return await this.retryService.retryWithBackoff(operation, {
@@ -51,15 +50,10 @@ export class PropertyService {
 
   async create(createPropertyDto: CreatePropertyDto): Promise<PropertyDocument> {
     try {
-      // Use circuit breaker for database operation
       const property = await this.dbBreaker.fire(() => {
         const property = new this.propertyModel(createPropertyDto);
         return property.save();
       });
-
-      // Invalidate cache - clear all property caches
-      // Note: Pattern matching requires Redis. For in-memory cache, we track keys separately.
-      // In production, use Redis for pattern-based invalidation.
       
       this.logger.info(`Property created: ${property._id}`, {
         context: 'PropertyService',
@@ -90,7 +84,6 @@ export class PropertyService {
     const cacheKey = `properties:${JSON.stringify(filterDto || {})}`;
 
     try {
-      // Try cache first
       const cached = await this.cacheService.get<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }>(cacheKey);
       if (cached) {
         this.metricsService.recordMetric('property.cache.hit', 1);
@@ -147,16 +140,14 @@ export class PropertyService {
         }
       }
 
-      // Get total count for pagination
       const total = await this.dbBreaker.fire(() =>
         this.propertyModel.countDocuments(query).exec(),
       );
 
-      // Use circuit breaker for database operation with pagination
       const properties = await this.dbBreaker.fire(() =>
         this.propertyModel
           .find(query)
-          .sort({ createdAt: -1 }) // Sort by newest first
+          .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
           .exec(),
@@ -172,7 +163,6 @@ export class PropertyService {
         totalPages,
       };
 
-      // Cache results for 5 minutes
       await this.cacheService.set(cacheKey, result, 300);
 
       const duration = Date.now() - startTime;
@@ -204,13 +194,11 @@ export class PropertyService {
     const cacheKey = `property:${id}`;
 
     try {
-      // Try cache first
       const cached = await this.cacheService.get<PropertyDocument>(cacheKey);
       if (cached) {
         return cached;
       }
 
-      // Use circuit breaker for database operation
       const property = await this.dbBreaker.fire(() =>
         this.propertyModel.findById(id).exec(),
       );
@@ -222,7 +210,6 @@ export class PropertyService {
         throw new NotFoundException(`Property with ID ${id} not found`);
       }
 
-      // Cache for 10 minutes
       await this.cacheService.set(cacheKey, property, 600);
 
       return property;
@@ -239,7 +226,6 @@ export class PropertyService {
 
   async update(id: string, updatePropertyDto: Partial<CreatePropertyDto>): Promise<PropertyDocument | null> {
     try {
-      // Use circuit breaker for database operation
       const property = await this.dbBreaker.fire(() =>
         this.propertyModel.findByIdAndUpdate(id, updatePropertyDto, { new: true }).exec(),
       );
@@ -251,7 +237,6 @@ export class PropertyService {
         throw new NotFoundException(`Property with ID ${id} not found`);
       }
 
-      // Invalidate cache
       await this.cacheService.del(`property:${id}`);
       await this.cacheService.del('properties:*');
 
@@ -276,7 +261,6 @@ export class PropertyService {
 
   async remove(id: string): Promise<void> {
     try {
-      // Use circuit breaker for database operation
       const property = await this.dbBreaker.fire(() =>
         this.propertyModel.findByIdAndDelete(id).exec(),
       );
@@ -288,7 +272,6 @@ export class PropertyService {
         throw new NotFoundException(`Property with ID ${id} not found`);
       }
 
-      // Invalidate cache
       await this.cacheService.del(`property:${id}`);
       await this.cacheService.del('properties:*');
 
@@ -330,7 +313,6 @@ export class PropertyService {
     const cacheKey = `properties:user:${userId}:${JSON.stringify(filterDto || {})}`;
 
     try {
-      // Try cache first
       const cached = await this.cacheService.get<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }>(cacheKey);
       if (cached) {
         this.metricsService.recordMetric('property.cache.hit', 1);
@@ -387,12 +369,10 @@ export class PropertyService {
         }
       }
 
-      // Get total count for pagination
       const total = await this.dbBreaker.fire(() =>
         this.propertyModel.countDocuments(query).exec(),
       );
 
-      // Use circuit breaker for database operation with pagination
       const properties = await this.dbBreaker.fire(() =>
         this.propertyModel
           .find(query)
@@ -412,7 +392,6 @@ export class PropertyService {
         totalPages,
       };
 
-      // Cache for 5 minutes
       await this.cacheService.set(cacheKey, result, 300);
 
       const duration = Date.now() - startTime;

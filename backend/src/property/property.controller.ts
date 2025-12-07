@@ -46,28 +46,24 @@ export class PropertyController {
     @UploadedFiles() files?: Express.Multer.File[],
     @Req() req?: any,
   ) {
-    // Upload images if provided
     if (files && files.length > 0) {
       const imageUrls = await this.uploadService.saveMultipleFiles(files);
       createPropertyDto.images = imageUrls;
     }
 
-    // Add userId from authenticated user
     if (req?.user?.id) {
       (createPropertyDto as any).userId = req.user.id;
     }
 
     const property = await this.propertyService.create(createPropertyDto);
 
-    // Send email notification if contact email is provided
     if (createPropertyDto.contactEmail) {
-      try {
-        await this.emailService.sendPropertyListingEmail(
-          createPropertyDto.contactEmail,
-          property.title,
-        );
-      } catch (error) {
-        console.error('Failed to send property listing email:', error);
+      const emailResult = await this.emailService.sendPropertyListingEmail(
+        createPropertyDto.contactEmail,
+        property.title,
+      );
+      if (!emailResult) {
+        console.warn(`Property listing email failed to send to: ${createPropertyDto.contactEmail}`);
       }
     }
 
@@ -267,7 +263,6 @@ export class PropertyController {
       throw new Error('Contact email not available for this property');
     }
 
-    // Send email to property agent
     try {
       const emailResult = await this.emailService.sendPropertyInquiryEmail(
         property.contactEmail,
@@ -283,7 +278,6 @@ export class PropertyController {
       }
     } catch (error) {
       console.error('Failed to send inquiry email:', error);
-      // Don't throw error - inquiry is still saved, just email failed
     }
 
     return {
@@ -292,13 +286,11 @@ export class PropertyController {
     };
   }
 
-  // Transform MongoDB document to include 'id' field
   private transformProperty(property: any): any {
     if (!property) return property;
     
     const transformed = property.toObject ? property.toObject() : { ...property };
     
-    // Convert _id to id
     if (transformed._id) {
       transformed.id = transformed._id.toString();
       delete transformed._id;

@@ -3,128 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>New Property Inquiry</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #333333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .email-wrapper {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #ffffff;
         }
         .container {
             background-color: #ffffff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 40px 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
         }
         .logo {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
             color: #00A86B;
             margin-bottom: 10px;
+            letter-spacing: -1px;
         }
         h1 {
+            color: #333333;
+            margin-top: 20px;
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+        }
+        h3 {
             color: #00A86B;
-            margin-top: 0;
+            margin: 25px 0 15px 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .content {
+            margin: 30px 0;
+            color: #555555;
+        }
+        .content p {
+            margin-bottom: 16px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .form-container {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333333;
+            font-size: 14px;
         }
         .property-box {
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+            padding: 25px;
+            border-radius: 8px;
             border-left: 4px solid #00A86B;
-            margin: 20px 0;
+            margin: 25px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .property-box h2 {
+            margin: 0;
+            color: #333333;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
         }
         .info-box {
             background-color: #f0f7ff;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .message-box {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-left: 4px solid #00A86B;
-            margin: 20px 0;
-            white-space: pre-wrap;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border: 1px solid #d0e7ff;
         }
         .contact-info {
-            margin: 10px 0;
+            margin: 12px 0;
+            font-size: 15px;
+            color: #444444;
         }
         .contact-info strong {
             color: #00A86B;
+            display: inline-block;
+            min-width: 80px;
+        }
+        .contact-info a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        .message-box {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-left: 4px solid #00A86B;
+            margin: 25px 0;
+            white-space: pre-wrap;
+            border-radius: 6px;
+            font-size: 15px;
+            color: #444444;
+            line-height: 1.8;
+        }
+        .button-container {
+            text-align: center;
+            margin: 35px 0;
         }
         .button {
             display: inline-block;
-            padding: 12px 30px;
+            padding: 14px 35px;
             background-color: #00A86B;
-            color: #ffffff;
+            color: #ffffff !important;
             text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: bold;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 168, 107, 0.3);
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .button:hover {
+            background-color: #008a56;
         }
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
             text-align: center;
-            color: #666;
-            font-size: 12px;
+            color: #888888;
+            font-size: 13px;
+        }
+        .footer p {
+            margin-bottom: 8px;
+        }
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 25px 20px;
+                border-radius: 8px;
+            }
+            .logo {
+                font-size: 28px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h3 {
+                font-size: 18px;
+            }
+            .content p {
+                font-size: 15px;
+            }
+            .form-container {
+                padding: 20px;
+            }
+            .property-box {
+                padding: 20px;
+            }
+            .property-box h2 {
+                font-size: 20px;
+            }
+            .info-box {
+                padding: 20px;
+            }
+            .contact-info {
+                font-size: 14px;
+            }
+            .contact-info strong {
+                display: block;
+                margin-bottom: 5px;
+            }
+            .message-box {
+                padding: 15px;
+                font-size: 14px;
+            }
+            .button {
+                padding: 12px 28px;
+                font-size: 15px;
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🏠 bayut</div>
-        </div>
-        
-        <h1>New Property Inquiry</h1>
-        
-        <div class="content">
-            <p>You have received a new inquiry for your property listing.</p>
-            
-            <div class="property-box">
-                <h2 style="margin-top: 0; color: #333;">Property: <%= propertyTitle %></h2>
+    <div class="email-wrapper">
+        <div class="container">
+            <div class="header">
+                <div class="logo">🏠 bayut</div>
             </div>
             
-            <h3 style="color: #00A86B;">Inquirer Details:</h3>
-            <div class="info-box">
-                <div class="contact-info">
-                    <strong>Name:</strong> <%= inquirerName %>
+            <h1>New Property Inquiry</h1>
+            
+            <div class="content">
+                <p>You have received a new inquiry for your property listing.</p>
+                
+                <div class="form-container">
+                    <div class="form-group">
+                        <label class="form-label">Property</label>
+                        <div class="property-box">
+                            <h2><%= typeof propertyTitle !== 'undefined' && propertyTitle ? propertyTitle : 'Property' %></h2>
+                        </div>
+                    </div>
+                    
+                    <h3>Inquirer Details:</h3>
+                    <div class="info-box">
+                        <div class="contact-info">
+                            <strong>Name:</strong> <%= typeof inquirerName !== 'undefined' && inquirerName ? inquirerName : 'Guest' %>
+                        </div>
+                        <div class="contact-info">
+                            <strong>Email:</strong> <a href="mailto:<%= typeof inquirerEmail !== 'undefined' && inquirerEmail ? inquirerEmail : '' %>"><%= typeof inquirerEmail !== 'undefined' && inquirerEmail ? inquirerEmail : 'N/A' %></a>
+                        </div>
+                        <% if (typeof inquirerPhone !== 'undefined' && inquirerPhone && inquirerPhone.trim() !== '') { %>
+                        <div class="contact-info">
+                            <strong>Phone:</strong> <a href="tel:<%= inquirerPhone %>"><%= inquirerPhone %></a>
+                        </div>
+                        <% } %>
+                    </div>
+                    
+                    <h3>Message:</h3>
+                    <div class="message-box">
+<%= typeof message !== 'undefined' && message ? message : 'No message provided' %>
+                    </div>
+                    
+                    <div class="button-container">
+                        <a href="mailto:<%= typeof inquirerEmail !== 'undefined' && inquirerEmail ? inquirerEmail : '' %>?subject=Re: Inquiry about <%= typeof propertyTitle !== 'undefined' && propertyTitle ? encodeURIComponent(propertyTitle) : 'Property' %>" class="button">Reply to Inquirer</a>
+                    </div>
                 </div>
-                <div class="contact-info">
-                    <strong>Email:</strong> <a href="mailto:<%= inquirerEmail %>"><%= inquirerEmail %></a>
-                </div>
-                <% if (inquirerPhone) { %>
-                <div class="contact-info">
-                    <strong>Phone:</strong> <a href="tel:<%= inquirerPhone %>"><%= inquirerPhone %></a>
-                </div>
-                <% } %>
             </div>
             
-            <h3 style="color: #00A86B;">Message:</h3>
-            <div class="message-box">
-                <%= message %>
+            <div class="footer">
+                <p>You can reply directly to this email to contact the inquirer.</p>
+                <p><strong>Best regards,</strong><br>The Bayut Clone Team</p>
             </div>
-            
-            <div style="text-align: center;">
-                <a href="mailto:<%= inquirerEmail %>?subject=Re: Inquiry about <%= propertyTitle %>" class="button">Reply to Inquirer</a>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>You can reply directly to this email to contact the inquirer.</p>
-            <p>Best regards,<br>The Bayut Clone Team</p>
         </div>
     </div>
 </body>
 </html>
-

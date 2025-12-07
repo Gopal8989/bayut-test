@@ -3,92 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Welcome to Bayut Clone</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #333333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .email-wrapper {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #ffffff;
         }
         .container {
             background-color: #ffffff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 40px 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
         }
         .logo {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
             color: #00A86B;
             margin-bottom: 10px;
+            letter-spacing: -1px;
         }
         h1 {
-            color: #00A86B;
-            margin-top: 0;
+            color: #333333;
+            margin-top: 20px;
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
         }
         .content {
-            margin: 20px 0;
+            margin: 30px 0;
+            color: #555555;
+        }
+        .content p {
+            margin-bottom: 16px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .form-container {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333333;
+            font-size: 14px;
+        }
+        .features {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 4px solid #00A86B;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            padding: 10px 0;
+            font-size: 15px;
+            color: #444444;
+        }
+        .features li:before {
+            content: "✓ ";
+            color: #00A86B;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .button-container {
+            text-align: center;
+            margin: 35px 0;
         }
         .button {
             display: inline-block;
-            padding: 12px 30px;
+            padding: 14px 35px;
             background-color: #00A86B;
-            color: #ffffff;
+            color: #ffffff !important;
             text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: bold;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 168, 107, 0.3);
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .button:hover {
+            background-color: #008a56;
         }
         .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
             text-align: center;
-            color: #666;
-            font-size: 12px;
+            color: #888888;
+            font-size: 13px;
+        }
+        .footer p {
+            margin-bottom: 8px;
+        }
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 25px 20px;
+                border-radius: 8px;
+            }
+            .logo {
+                font-size: 28px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .content p {
+                font-size: 15px;
+            }
+            .form-container {
+                padding: 20px;
+            }
+            .button {
+                padding: 12px 28px;
+                font-size: 15px;
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🏠 bayut</div>
-        </div>
-        
-        <h1>Welcome to Bayut Clone!</h1>
-        
-        <div class="content">
-            <p>Hi <%= firstName %>,</p>
-            
-            <p>Thank you for registering with Bayut Clone. We're excited to have you on board!</p>
-            
-            <p>Start exploring properties and find your dream home today. Our platform offers:</p>
-            
-            <ul>
-                <li>🏠 Thousands of properties for sale and rent</li>
-                <li>📍 Search by location, price, and property type</li>
-                <li>💼 List your own properties</li>
-                <li>📧 Direct contact with agents</li>
-            </ul>
-            
-            <div style="text-align: center;">
-                <a href="<%= frontendUrl %>" class="button">Explore Properties</a>
+    <div class="email-wrapper">
+        <div class="container">
+            <div class="header">
+                <div class="logo">🏠 bayut</div>
             </div>
-        </div>
-        
-        <div class="footer">
-            <p>Best regards,<br>The Bayut Clone Team</p>
-            <p>If you have any questions, feel free to contact us.</p>
+            
+            <h1>Welcome to Bayut Clone!</h1>
+            
+            <div class="content">
+                <p>Hi <strong><%= typeof firstName !== 'undefined' && firstName ? firstName : 'User' %></strong>,</p>
+                
+                <p>Thank you for registering with Bayut Clone. We're excited to have you on board!</p>
+                
+                <div class="form-container">
+                    <p style="text-align: left; margin-bottom: 20px;">Start exploring properties and find your dream home today. Our platform offers:</p>
+                    
+                    <div class="features">
+                        <ul>
+                            <li>Thousands of properties for sale and rent</li>
+                            <li>Search by location, price, and property type</li>
+                            <li>List your own properties</li>
+                            <li>Direct contact with agents</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="button-container">
+                        <a href="<%= typeof frontendUrl !== 'undefined' && frontendUrl ? frontendUrl : 'http://localhost:3000' %>" class="button">Explore Properties</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p><strong>Best regards,</strong><br>The Bayut Clone Team</p>
+                <p>If you have any questions, feel free to contact us.</p>
+            </div>
         </div>
     </div>
 </body>
 </html>
-
