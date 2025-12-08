@@ -28,36 +28,53 @@ export class EmailService {
           user,
           pass: password,
         },
-        connectionTimeout: 20000,
-        greetingTimeout: 15000,
-        socketTimeout: 20000,
+        connectionTimeout: 60000,
+        greetingTimeout: 30000,
+        socketTimeout: 60000,
         pool: true,
         maxConnections: 1,
         maxMessages: 3,
+        rateDelta: 1000,
+        rateLimit: 5,
         debug: process.env.NODE_ENV === 'development',
         logger: process.env.NODE_ENV === 'development',
+        tls: {
+          rejectUnauthorized: false,
+          ciphers: 'SSLv3',
+        },
       });
 
+      // Verify connection asynchronously without blocking startup
       this.transporter.verify((error, success) => {
         if (error) {
-          console.error('SMTP Connection Error:', error.message);
-          console.error('SMTP Configuration:', {
+          const errorCode = (error as any).code;
+          const errorCommand = (error as any).command;
+          
+          console.warn(`SMTP Connection Error: ${error.message}`, {
+            context: 'EmailService',
+            errorCode,
+            errorCommand,
             host,
             port,
             secure,
-            user,
-            // The 'code' and 'command' properties may not exist on generic Error, so cast to any
-            errorCode: (error as any).code,
-            errorCommand: (error as any).command,
+            user: user ? `${user.substring(0, 3)}***` : 'not set',
           });
-          console.warn('Email service may not work properly. Check SMTP configuration.');
+          
+          console.warn('Email service may not work properly. Check SMTP configuration.', {
+            context: 'EmailService',
+          });
+          
+          // Don't throw error, just log warning - email sending will be attempted but may fail
           console.warn('Troubleshooting:');
           console.warn('  1. Verify SMTP_HOST and SMTP_PORT are correct');
           console.warn('  2. Check firewall/network settings');
           console.warn('  3. For Gmail: Use App Password (not regular password)');
-          console.warn('  4. Ensure "Less secure app access" is enabled (if using Gmail)');
+          console.warn('  4. Check if SMTP port is blocked by firewall');
+          console.warn('  5. Try using port 587 with secure: false for STARTTLS');
         } else {
-          console.log(`SMTP Server is ready to send emails (${host}:${port})`);
+          console.log(`SMTP Server is ready to send emails (${host}:${port})`, {
+            context: 'EmailService',
+          });
         }
       });
     } else {
@@ -107,12 +124,18 @@ export class EmailService {
     }
 
     try {
-      const info = await this.transporter.sendMail({
-        from: this.configService.get('SMTP_FROM', this.configService.get('SMTP_USER')),
-        to: this.sanitizeInput(to),
-        subject: this.sanitizeInput(subject),
-        html,
-      });
+      const info = await Promise.race([
+        this.transporter.sendMail({
+          from: this.configService.get('SMTP_FROM', this.configService.get('SMTP_USER')),
+          to: this.sanitizeInput(to),
+          subject: this.sanitizeInput(subject),
+          html,
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email send timeout after 60 seconds')), 60000)
+        ),
+      ]) as any;
+      
       console.log(`Email sent successfully to ${to}`, {
         messageId: info.messageId,
         accepted: info.accepted,
@@ -120,29 +143,42 @@ export class EmailService {
       });
       return info;
     } catch (error: any) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
       const errorDetails: any = {
-        code: error.code,
+        code: errorCode,
         command: error.command,
         response: error.response,
       };
 
-      if (error.code === 'ETIMEDOUT') {
-        console.error(`SMTP Connection Timeout sending email to ${to}`);
+      if (errorCode === 'ETIMEDOUT' || errorMessage?.includes('timeout')) {
+        console.error(`SMTP Connection Timeout sending email to ${to}`, {
+          errorCode,
+          errorMessage,
+          host: this.configService.get('SMTP_HOST'),
+          port: this.configService.get('SMTP_PORT'),
+        });
         console.error('Possible causes:');
         console.error('  - SMTP server is unreachable');
         console.error('  - Firewall blocking connection');
         console.error('  - Incorrect SMTP_HOST or SMTP_PORT');
         console.error('  - Network connectivity issues');
-      } else if (error.code === 'EAUTH') {
-        console.error(`SMTP Authentication Failed sending email to ${to}`);
+      } else if (errorCode === 'EAUTH') {
+        console.error(`SMTP Authentication Failed sending email to ${to}`, {
+          errorCode,
+          errorMessage,
+          user: this.configService.get('SMTP_USER') ? `${this.configService.get('SMTP_USER')?.substring(0, 3)}***` : 'not set',
+        });
         console.error('Possible causes:');
         console.error('  - Incorrect SMTP_USER or SMTP_PASSWORD');
         console.error('  - For Gmail: Use App Password instead of regular password');
       } else {
-        console.error(`Error sending email to ${to}:`, error.message);
+        console.error(`Error sending email to ${to}:`, errorMessage, {
+          errorCode,
+          errorDetails,
+        });
       }
 
-      console.error('SMTP Error Details:', errorDetails);
       return null;
     }
   }

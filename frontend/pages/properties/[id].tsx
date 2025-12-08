@@ -44,13 +44,14 @@ export default function PropertyDetail() {
       setLoading(true);
       setError(null);
       const response = await api.get(`/properties/${id}`);
-      if (response.data) {
-        console.log('Property data received:', response.data);
-        console.log('Property images:', response.data.images);
-        setProperty(response.data);
+      const data = response.data?.data || response.data;
+      if (data && Object.keys(data).length > 0) {
+        console.log('Property data received:', data);
+        console.log('Property images:', data.images);
+        setProperty(data);
       } else {
-        setError('Property not found');
-        showToast('Property not found', 'error');
+        setError(response.data?.message || 'Property not found');
+        showToast(response.data?.message || 'Property not found', 'error');
       }
     } catch (error: any) {
       const errorMessage = getErrorMessage(error);

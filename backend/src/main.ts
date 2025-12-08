@@ -92,20 +92,39 @@ async function bootstrap() {
   });
   
   // Enhanced CORS configuration
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['http://localhost:3000'];
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        loggerService.warn(`CORS blocked origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+      // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+      if (!origin) {
+        return callback(null, true);
       }
+      
+      // In development, allow all origins
+      if (isDevelopment) {
+        return callback(null, true);
+      }
+      
+      // In production, check against allowed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Log blocked origin for debugging
+      loggerService.warn(`CORS blocked origin: ${origin}`, {
+        allowedOrigins,
+        isDevelopment,
+      });
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
   
   // Trust proxy for rate limiting behind reverse proxy

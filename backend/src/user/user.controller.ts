@@ -27,19 +27,28 @@ export class UserController {
   async getProfile(@Request() req) {
     const user = await this.userService.findById(req.user.id);
     if (!user) {
-      return null;
+      return {
+        data: {},
+        message: 'User not found',
+        status: 'error',
+        success: false,
+      };
     }
     return {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      avatar: user.avatar,
-      emailVerified: user.emailVerified,
-      lastLogin: user.lastLogin,
-      createdAt: (user as any).createdAt,
-      updatedAt: (user as any).updatedAt,
+      data: {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        avatar: user.avatar,
+        emailVerified: user.emailVerified,
+        lastLogin: user.lastLogin,
+        createdAt: (user as any).createdAt,
+        updatedAt: (user as any).updatedAt,
+      },
+      status: 'success',
+      success: true,
     };
   }
 
@@ -65,20 +74,30 @@ export class UserController {
   async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
     const updatedUser = await this.userService.updateProfile(req.user.id, updateProfileDto);
     if (!updatedUser) {
-      throw new Error('User not found');
+      return {
+        data: {},
+        message: 'User not found',
+        status: 'error',
+        success: false,
+      };
     }
     
     return {
-      id: updatedUser._id.toString(),
-      email: updatedUser.email,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
-      phone: updatedUser.phone,
-      avatar: updatedUser.avatar,
-      emailVerified: updatedUser.emailVerified,
-      lastLogin: updatedUser.lastLogin,
-      createdAt: (updatedUser as any).createdAt,
-      updatedAt: (updatedUser as any).updatedAt,
+      data: {
+        id: updatedUser._id.toString(),
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        phone: updatedUser.phone,
+        avatar: updatedUser.avatar,
+        emailVerified: updatedUser.emailVerified,
+        lastLogin: updatedUser.lastLogin,
+        createdAt: (updatedUser as any).createdAt,
+        updatedAt: (updatedUser as any).updatedAt,
+      },
+      message: 'Profile updated successfully',
+      status: 'success',
+      success: true,
     };
   }
 }

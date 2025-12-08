@@ -45,8 +45,13 @@ export class UploadController {
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     const fileUrl = await this.uploadService.saveFile(file);
     return {
-      url: fileUrl,
-      filename: file.originalname,
+      data: {
+        url: fileUrl,
+        filename: file.originalname,
+      },
+      message: 'File uploaded successfully',
+      status: 'success',
+      success: true,
     };
   }
 
@@ -75,8 +80,13 @@ export class UploadController {
   async uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
     const fileUrls = await this.uploadService.saveMultipleFiles(files);
     return {
-      urls: fileUrls,
-      count: fileUrls.length,
+      data: {
+        items: fileUrls,
+        count: fileUrls.length,
+      },
+      message: 'Files uploaded successfully',
+      status: 'success',
+      success: true,
     };
   }
 

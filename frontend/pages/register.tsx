@@ -42,14 +42,15 @@ export default function Register() {
 
     try {
       const response = await api.post('/auth/register', formData);
-      setAuthToken(response.data.access_token);
-      if (response.data.refresh_token) {
-        setRefreshToken(response.data.refresh_token);
+      const data = response.data?.data || response.data;
+      setAuthToken(data.access_token);
+      if (data.refresh_token) {
+        setRefreshToken(data.refresh_token);
       }
-      if (response.data.user) {
-        setUser(response.data.user);
+      if (data.user) {
+        setUser(data.user);
       }
-      showToast('Registration successful! Welcome!', 'success');
+      showToast(response.data?.message || 'Registration successful! Welcome!', 'success');
       router.push('/');
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);

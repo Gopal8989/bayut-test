@@ -67,7 +67,12 @@ export class PropertyController {
       }
     }
 
-    return this.transformProperty(property);
+    return {
+      data: this.transformProperty(property),
+      message: 'Property created successfully',
+      status: 'success',
+      success: true,
+    };
   }
 
   @Get()
@@ -90,8 +95,15 @@ export class PropertyController {
   })
   findAll(@Query() filterDto: FilterPropertyDto) {
     return this.propertyService.findAll(filterDto).then(result => ({
-      ...result,
-      data: result.data.map(property => this.transformProperty(property)),
+      data: {
+        items: result.data.map(property => this.transformProperty(property)),
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      },
+      status: 'success',
+      success: true,
     }));
   }
 
@@ -112,8 +124,15 @@ export class PropertyController {
   })
   findMyProperties(@Query() filterDto: FilterPropertyDto, @Req() req: any) {
     return this.propertyService.findByUserId(req.user.id, filterDto).then(result => ({
-      ...result,
-      data: result.data.map(property => this.transformProperty(property)),
+      data: {
+        items: result.data.map(property => this.transformProperty(property)),
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      },
+      status: 'success',
+      success: true,
     }));
   }
 
@@ -132,7 +151,13 @@ export class PropertyController {
     },
   })
   getCities() {
-    return this.propertyService.getCities();
+    return this.propertyService.getCities().then(cities => ({
+      data: {
+        items: Array.isArray(cities) ? cities : [],
+      },
+      status: 'success',
+      success: true,
+    }));
   }
 
   @Get('locations')
@@ -150,7 +175,13 @@ export class PropertyController {
     },
   })
   getLocations() {
-    return this.propertyService.getLocations();
+    return this.propertyService.getLocations().then(locations => ({
+      data: {
+        items: Array.isArray(locations) ? locations : [],
+      },
+      status: 'success',
+      success: true,
+    }));
   }
 
   @Get(':id')
@@ -172,9 +203,21 @@ export class PropertyController {
     description: 'Property not found',
   })
   findOne(@Param('id') id: string) {
-    return this.propertyService.findOne(id).then(property => 
-      property ? this.transformProperty(property) : null
-    );
+    return this.propertyService.findOne(id).then(property => {
+      if (!property) {
+        return {
+          data: {},
+          message: 'Property not found',
+          status: 'error',
+          success: false,
+        };
+      }
+      return {
+        data: this.transformProperty(property),
+        status: 'success',
+        success: true,
+      };
+    });
   }
 
   @Put(':id')
@@ -203,9 +246,22 @@ export class PropertyController {
     description: 'Property not found',
   })
   update(@Param('id') id: string, @Body() updatePropertyDto: Partial<CreatePropertyDto>) {
-    return this.propertyService.update(id, updatePropertyDto).then(property => 
-      property ? this.transformProperty(property) : null
-    );
+    return this.propertyService.update(id, updatePropertyDto).then(property => {
+      if (!property) {
+        return {
+          data: {},
+          message: 'Property not found',
+          status: 'error',
+          success: false,
+        };
+      }
+      return {
+        data: this.transformProperty(property),
+        message: 'Property updated successfully',
+        status: 'success',
+        success: true,
+      };
+    });
   }
 
   @Delete(':id')
@@ -234,7 +290,12 @@ export class PropertyController {
     description: 'Property not found',
   })
   remove(@Param('id') id: string) {
-    return this.propertyService.remove(id);
+    return this.propertyService.remove(id).then(() => ({
+      data: {},
+      message: 'Property deleted successfully',
+      status: 'success',
+      success: true,
+    }));
   }
 
   @Post('contact')
@@ -281,8 +342,12 @@ export class PropertyController {
     }
 
     return {
+      data: {
+        propertyId: contactDto.propertyId,
+      },
       message: 'Your inquiry has been sent successfully. The agent will contact you soon.',
-      propertyId: contactDto.propertyId,
+      status: 'success',
+      success: true,
     };
   }
 

@@ -29,14 +29,15 @@ export default function Login() {
 
     try {
       const response = await api.post('/auth/login', { email, password });
-      setAuthToken(response.data.access_token);
-      if (response.data.refresh_token) {
-        setRefreshToken(response.data.refresh_token);
+      const data = response.data?.data || response.data;
+      setAuthToken(data.access_token);
+      if (data.refresh_token) {
+        setRefreshToken(data.refresh_token);
       }
-      if (response.data.user) {
-        setUser(response.data.user);
+      if (data.user) {
+        setUser(data.user);
       }
-      showToast('Login successful!', 'success');
+      showToast(response.data?.message || 'Login successful!', 'success');
       router.push('/');
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);

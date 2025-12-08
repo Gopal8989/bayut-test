@@ -194,7 +194,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
 
               <div>
                 <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Your Phone
+                  Your Phone <span className="text-gray-400 text-xs font-normal">(Optional)</span>
                 </label>
                 <input
                   id="phone"

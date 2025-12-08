@@ -289,7 +289,7 @@ export default function CreateProperty() {
                 />
                 {images.length > 0 && (
                   <div className="mt-4 grid grid-cols-4 gap-4">
-                    {images.map((image, index) => (
+                    {Array.isArray(images) && images.map((image, index) => (
                       <div key={index} className="relative">
                         <img
                           src={URL.createObjectURL(image)}
@@ -327,7 +327,7 @@ export default function CreateProperty() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Contact Phone</label>
+                    <label className="block text-sm font-medium mb-1">Contact Phone <span className="text-gray-400 text-xs">(Optional)</span></label>
                     <input
                       type="tel"
                       name="contactPhone"

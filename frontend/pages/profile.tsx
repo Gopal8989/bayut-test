@@ -56,11 +56,12 @@ export default function Profile() {
     try {
       setLoading(true);
       const response = await api.get('/users/profile');
-      setProfile(response.data);
+      const data = response.data?.data || response.data;
+      setProfile(data);
       setFormData({
-        firstName: response.data.firstName || '',
-        lastName: response.data.lastName || '',
-        phone: response.data.phone || '',
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        phone: data.phone || '',
       });
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -77,8 +78,9 @@ export default function Profile() {
 
     try {
       const response = await api.put('/users/profile', formData);
-      setProfile(response.data);
-      showToast('Profile updated successfully!', 'success');
+      const data = response.data?.data || response.data;
+      setProfile(data);
+      showToast(response.data?.message || 'Profile updated successfully!', 'success');
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       showToast(errorMessage, 'error');
@@ -103,11 +105,11 @@ export default function Profile() {
     setUpdating(true);
 
     try {
-      await api.post('/auth/change-password', {
+      const response = await api.post('/auth/change-password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-      showToast('Password changed successfully!', 'success');
+      showToast(response.data?.message || 'Password changed successfully!', 'success');
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -267,7 +269,7 @@ export default function Profile() {
 
                     <div>
                       <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
-                        Phone Number
+                        Phone Number <span className="text-gray-400 text-xs font-normal">(Optional)</span>
                       </label>
                       <input
                         id="phone"

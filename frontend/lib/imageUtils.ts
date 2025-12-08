@@ -29,7 +29,7 @@ export const getImageUrl = (imagePath: string | undefined | null): string => {
  * @returns Array of full URLs
  */
 export const getImageUrls = (images: string[] | undefined | null): string[] => {
-  if (!images || images.length === 0) {
+  if (!images || !Array.isArray(images) || images.length === 0) {
     return [];
   }
   

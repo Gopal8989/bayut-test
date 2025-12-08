@@ -30,8 +30,12 @@ export class HealthController {
   })
   getHealth() {
     return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
+      data: {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+      },
+      status: 'success',
+      success: true,
     };
   }
 
@@ -46,19 +50,23 @@ export class HealthController {
   })
   getMetrics() {
     return {
-      circuitBreakers: this.circuitBreakerService.getAllBreakerStats(),
-      metrics: {
-        propertyQueries: this.metricsService.getCounter('property.queries.total'),
-        propertyCreated: this.metricsService.getCounter('property.created'),
-        propertyUpdated: this.metricsService.getCounter('property.updated'),
-        propertyDeleted: this.metricsService.getCounter('property.deleted'),
-        httpRequests: this.metricsService.getCounter('http.requests.total'),
-        httpErrors: this.metricsService.getCounter('http.requests.errors'),
+      data: {
+        circuitBreakers: this.circuitBreakerService.getAllBreakerStats(),
+        metrics: {
+          propertyQueries: this.metricsService.getCounter('property.queries.total'),
+          propertyCreated: this.metricsService.getCounter('property.created'),
+          propertyUpdated: this.metricsService.getCounter('property.updated'),
+          propertyDeleted: this.metricsService.getCounter('property.deleted'),
+          httpRequests: this.metricsService.getCounter('http.requests.total'),
+          httpErrors: this.metricsService.getCounter('http.requests.errors'),
+        },
+        histograms: {
+          propertyQueryDuration: this.metricsService.getHistogramStats('property.query.duration'),
+          httpRequestDuration: this.metricsService.getHistogramStats('http.request.duration'),
+        },
       },
-      histograms: {
-        propertyQueryDuration: this.metricsService.getHistogramStats('property.query.duration'),
-        httpRequestDuration: this.metricsService.getHistogramStats('http.request.duration'),
-      },
+      status: 'success',
+      success: true,
     };
   }
 
@@ -73,7 +81,11 @@ export class HealthController {
   })
   getCircuitBreakers() {
     return {
-      breakers: this.circuitBreakerService.getAllBreakerStats(),
+      data: {
+        items: this.circuitBreakerService.getAllBreakerStats(),
+      },
+      status: 'success',
+      success: true,
     };
   }
 }

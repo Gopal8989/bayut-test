@@ -44,11 +44,11 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      await api.post('/auth/reset-password', {
+      const response = await api.post('/auth/reset-password', {
         token,
         newPassword: password,
       });
-      showToast('Password reset successfully! Redirecting to login...', 'success');
+      showToast(response.data?.message || 'Password reset successfully! Redirecting to login...', 'success');
       setTimeout(() => {
         router.push('/login');
       }, 2000);

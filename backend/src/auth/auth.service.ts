@@ -67,13 +67,18 @@ export class AuthService {
       });
 
       return {
-        ...tokens,
-        user: {
-          id: user._id.toString(),
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+        data: {
+          ...tokens,
+          user: {
+            id: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          },
         },
+        message: 'User registered successfully',
+        status: 'success',
+        success: true,
       };
     } catch (error) {
       this.logger.error(`Registration failed for ${registerDto.email}`, error.stack, {
@@ -118,13 +123,18 @@ export class AuthService {
     });
 
     return {
-      ...tokens,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+      data: {
+        ...tokens,
+        user: {
+          id: user._id.toString(),
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
       },
+      message: 'Login successful',
+      status: 'success',
+      success: true,
     };
   }
 
@@ -142,7 +152,12 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
       await this.userService.updateRefreshToken(user._id.toString(), tokens.refresh_token);
 
-      return tokens;
+      return {
+        data: tokens,
+        message: 'Token refreshed successfully',
+        status: 'success',
+        success: true,
+      };
     } catch (error) {
       this.logger.warn('Refresh token validation failed', {
         context: 'AuthService',
@@ -177,7 +192,12 @@ export class AuthService {
         context: 'AuthService',
         emailId: emailResult.messageId,
       });
-      return { message: 'Password reset link has been sent to your email address' };
+      return {
+        data: {},
+        message: 'Password reset link has been sent to your email address',
+        status: 'success',
+        success: true,
+      };
     } else {
       this.logger.error(`Password reset email failed to send to: ${user.email}`, {
         context: 'AuthService',
@@ -200,7 +220,12 @@ export class AuthService {
       context: 'AuthService',
     });
 
-    return { message: 'Password has been reset successfully' };
+    return {
+      data: {},
+      message: 'Password has been reset successfully',
+      status: 'success',
+      success: true,
+    };
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
@@ -223,7 +248,12 @@ export class AuthService {
       context: 'AuthService',
     });
 
-    return { message: 'Password changed successfully' };
+    return {
+      data: {},
+      message: 'Password changed successfully',
+      status: 'success',
+      success: true,
+    };
   }
 
   async logout(userId: string) {
@@ -231,7 +261,12 @@ export class AuthService {
     this.logger.info(`User logged out: ${userId}`, {
       context: 'AuthService',
     });
-    return { message: 'Logged out successfully' };
+    return {
+      data: {},
+      message: 'Logged out successfully',
+      status: 'success',
+      success: true,
+    };
   }
 
   private async generateTokens(user: any) {

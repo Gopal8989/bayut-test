@@ -53,16 +53,16 @@ export default function MyProperties() {
       const url = `/properties/my-properties?${queryString}`;
       const response = await api.get(url);
       
-      if (response.data && response.data.data) {
-        setProperties(response.data.data || []);
+      if (response.data?.data?.items) {
+        setProperties(response.data.data.items || []);
         setPagination({
-          total: response.data.total || 0,
-          page: response.data.page || 1,
-          limit: response.data.limit || 12,
-          totalPages: response.data.totalPages || 0,
+          total: response.data.data.total || 0,
+          page: response.data.data.page || 1,
+          limit: response.data.data.limit || 12,
+          totalPages: response.data.data.totalPages || 0,
         });
       } else {
-        setProperties(response.data || []);
+        setProperties(response.data?.data || response.data || []);
         setPagination({ total: 0, page: 1, limit: 12, totalPages: 0 });
       }
     } catch (error) {
@@ -78,7 +78,22 @@ export default function MyProperties() {
   const fetchCities = async () => {
     try {
       const response = await api.get('/properties/cities');
-      setCities(response.data || []);
+      let citiesData = null;
+      
+      // Handle different response structures
+      if (response?.data?.data?.items) {
+        citiesData = response.data.data.items;
+      } else if (response?.data?.data && Array.isArray(response.data.data)) {
+        citiesData = response.data.data;
+      } else if (response?.data?.items) {
+        citiesData = response.data.items;
+      } else if (Array.isArray(response?.data)) {
+        citiesData = response.data;
+      } else if (Array.isArray(response?.data?.data)) {
+        citiesData = response.data.data;
+      }
+      
+      setCities(Array.isArray(citiesData) ? citiesData : []);
     } catch (error) {
       console.error('Error fetching cities:', error);
       setCities([]);
@@ -88,7 +103,22 @@ export default function MyProperties() {
   const fetchLocations = async () => {
     try {
       const response = await api.get('/properties/locations');
-      setLocations(response.data || []);
+      let locationsData = null;
+      
+      // Handle different response structures
+      if (response?.data?.data?.items) {
+        locationsData = response.data.data.items;
+      } else if (response?.data?.data && Array.isArray(response.data.data)) {
+        locationsData = response.data.data;
+      } else if (response?.data?.items) {
+        locationsData = response.data.items;
+      } else if (Array.isArray(response?.data)) {
+        locationsData = response.data;
+      } else if (Array.isArray(response?.data?.data)) {
+        locationsData = response.data.data;
+      }
+      
+      setLocations(Array.isArray(locationsData) ? locationsData : []);
     } catch (error) {
       console.error('Error fetching locations:', error);
       setLocations([]);
@@ -182,7 +212,7 @@ export default function MyProperties() {
                   onChange={(e) => setFilters({ ...filters, city: e.target.value || undefined, page: 1 })}
                 >
                   <option value="">All Cities</option>
-                  {cities.map((city) => (
+                  {Array.isArray(cities) && cities.map((city) => (
                     <option key={city} value={city}>{city}</option>
                   ))}
                 </select>
@@ -195,7 +225,7 @@ export default function MyProperties() {
                   onChange={(e) => setFilters({ ...filters, location: e.target.value || undefined, page: 1 })}
                 >
                   <option value="">All Locations</option>
-                  {locations.map((location) => (
+                  {Array.isArray(locations) && locations.map((location) => (
                     <option key={location} value={location}>{location}</option>
                   ))}
                 </select>
@@ -243,7 +273,7 @@ export default function MyProperties() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {properties.map((property) => {
+                {Array.isArray(properties) && properties.map((property) => {
                   const propertyId = property.id || property._id || Math.random().toString();
                   return <PropertyCard key={propertyId} property={property} />;
                 })}

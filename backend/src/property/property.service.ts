@@ -293,13 +293,33 @@ export class PropertyService {
   }
 
   async getCities(): Promise<string[]> {
-    const properties = await this.propertyModel.find().select('city').exec();
-    return [...new Set(properties.map(p => p.city).filter(Boolean))];
+    try {
+      const properties = await this.propertyModel.find().select('city').exec();
+      if (!Array.isArray(properties)) {
+        return [];
+      }
+      return [...new Set(properties.map(p => p.city).filter(Boolean))];
+    } catch (error) {
+      this.logger.error('Failed to fetch cities', error.stack, {
+        context: 'PropertyService',
+      });
+      return [];
+    }
   }
 
   async getLocations(): Promise<string[]> {
-    const properties = await this.propertyModel.find().select('location').exec();
-    return [...new Set(properties.map(p => p.location).filter(Boolean))];
+    try {
+      const properties = await this.propertyModel.find().select('location').exec();
+      if (!Array.isArray(properties)) {
+        return [];
+      }
+      return [...new Set(properties.map(p => p.location).filter(Boolean))];
+    } catch (error) {
+      this.logger.error('Failed to fetch locations', error.stack, {
+        context: 'PropertyService',
+      });
+      return [];
+    }
   }
 
   async findByUserId(userId: string, filterDto?: FilterPropertyDto): Promise<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }> {

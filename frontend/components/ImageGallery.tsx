@@ -151,7 +151,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images: rawImages, title })
                 msOverflowStyle: 'none',
               }}
             >
-              {displayImages.map((image, index) => (
+              {Array.isArray(displayImages) && displayImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
