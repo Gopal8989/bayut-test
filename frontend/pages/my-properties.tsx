@@ -18,6 +18,8 @@ export default function MyProperties() {
   const [filters, setFilters] = useState<FilterParams>({ page: 1, limit: 12 });
   const [cities, setCities] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -122,6 +124,21 @@ export default function MyProperties() {
     } catch (error) {
       console.error('Error fetching locations:', error);
       setLocations([]);
+    }
+  };
+
+  const handleDelete = async (propertyId: string) => {
+    try {
+      setDeletingId(propertyId);
+      await api.delete(`/properties/${propertyId}`);
+      showToast('Property deleted successfully!', 'success');
+      setShowDeleteConfirm(null);
+      fetchProperties();
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      showToast('Failed to delete property. Please try again.', 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -274,10 +291,67 @@ export default function MyProperties() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {Array.isArray(properties) && properties.map((property) => {
-                  const propertyId = property.id || property._id || Math.random().toString();
-                  return <PropertyCard key={propertyId} property={property} />;
+                  const propertyId = String(property.id || property._id || Math.random().toString());
+                  return (
+                    <div key={propertyId} className="relative group">
+                      <PropertyCard property={property} />
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <Link
+                          href={`/properties/edit/${propertyId}`}
+                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md"
+                          title="Edit Property"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </Link>
+                        <button
+                          onClick={() => setShowDeleteConfirm(propertyId)}
+                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md"
+                          title="Delete Property"
+                          disabled={deletingId === propertyId}
+                        >
+                          {deletingId === propertyId ? (
+                            <LoadingSpinner size="sm" />
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
                 })}
               </div>
+
+              {/* Delete Confirmation Modal */}
+              {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Property</h3>
+                    <p className="text-gray-600 mb-6">
+                      Are you sure you want to delete this property? This action cannot be undone.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleDelete(showDeleteConfirm)}
+                        disabled={deletingId === showDeleteConfirm}
+                        className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {deletingId === showDeleteConfirm ? 'Deleting...' : 'Delete'}
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(null)}
+                        disabled={deletingId === showDeleteConfirm}
+                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (

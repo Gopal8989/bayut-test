@@ -91,35 +91,10 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
   
-  // Enhanced CORS configuration
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['http://localhost:3000'];
-  const isDevelopment = process.env.NODE_ENV !== 'production';
-  
+  // CORS configuration - Allow all origins
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      // In development, allow all origins
-      if (isDevelopment) {
-        return callback(null, true);
-      }
-      
-      // In production, check against allowed origins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      // Log blocked origin for debugging
-      loggerService.warn(`CORS blocked origin: ${origin}`, {
-        allowedOrigins,
-        isDevelopment,
-      });
-      callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
+    origin: '*',
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
@@ -151,8 +126,12 @@ async function bootstrap() {
     .addTag('Authentication', 'User authentication endpoints')
     .addTag('Properties', 'Property management endpoints')
     .addTag('Health', 'Health check and monitoring endpoints')
-    .addServer('http://localhost:3001', 'Development server')
-    .addServer('https://api.bayut-clone.com', 'Production server')
+    .addServer(
+      process.env.NODE_ENV === 'production'
+        ? 'https://nest-backend-kuyo.onrender.com'
+        : `http://localhost:${process.env.PORT || 3001}`,
+      process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
