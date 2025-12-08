@@ -4,8 +4,10 @@
   "description": "Bayut Clone Backend API",
   "main": "dist/main.js",
   "scripts": {
+    "postinstall": "prisma generate || echo 'Prisma generate skipped'",
+    "prebuild": "prisma generate",
     "build": "nest build",
-    "build:clean": "rimraf dist && nest build",
+    "build:clean": "rimraf dist && prisma generate && nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
