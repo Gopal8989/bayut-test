@@ -36,7 +36,7 @@ export class UserController {
     }
     return {
       data: {
-        id: user._id.toString(),
+        id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -44,8 +44,8 @@ export class UserController {
         avatar: user.avatar,
         emailVerified: user.emailVerified,
         lastLogin: user.lastLogin,
-        createdAt: (user as any).createdAt,
-        updatedAt: (user as any).updatedAt,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
       status: 'success',
       success: true,
@@ -84,7 +84,7 @@ export class UserController {
     
     return {
       data: {
-        id: updatedUser._id.toString(),
+        id: updatedUser.id,
         email: updatedUser.email,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
@@ -92,8 +92,8 @@ export class UserController {
         avatar: updatedUser.avatar,
         emailVerified: updatedUser.emailVerified,
         lastLogin: updatedUser.lastLogin,
-        createdAt: (updatedUser as any).createdAt,
-        updatedAt: (updatedUser as any).updatedAt,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
       },
       message: 'Profile updated successfully',
       status: 'success',

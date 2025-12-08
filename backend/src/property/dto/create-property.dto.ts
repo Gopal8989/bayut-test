@@ -1,6 +1,6 @@
 import { IsString, IsNumber, IsEnum, IsOptional, IsArray, IsEmail, MinLength, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PropertyType, PropertyPurpose } from '../schemas/property.schema';
+import { PropertyType, PropertyPurpose } from '@prisma/client';
 
 export class CreatePropertyDto {
   @ApiProperty({
@@ -33,7 +33,7 @@ export class CreatePropertyDto {
   @ApiProperty({
     description: 'Type of property',
     enum: PropertyType,
-    example: PropertyType.APARTMENT,
+    example: 'apartment',
   })
   @IsEnum(PropertyType, { message: 'Invalid property type' })
   type: PropertyType;
@@ -41,7 +41,7 @@ export class CreatePropertyDto {
   @ApiProperty({
     description: 'Property purpose (sale or rent)',
     enum: PropertyPurpose,
-    example: PropertyPurpose.SALE,
+    example: 'sale',
   })
   @IsEnum(PropertyPurpose, { message: 'Invalid property purpose' })
   purpose: PropertyPurpose;

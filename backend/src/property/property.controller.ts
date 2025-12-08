@@ -191,7 +191,7 @@ export class PropertyController {
   })
   @ApiParam({
     name: 'id',
-    description: 'Property ID (MongoDB ObjectId)',
+    description: 'Property ID (UUID)',
     example: '507f1f77bcf86cd799439011',
   })
   @ApiResponse({
@@ -353,15 +353,7 @@ export class PropertyController {
 
   private transformProperty(property: any): any {
     if (!property) return property;
-    
-    const transformed = property.toObject ? property.toObject() : { ...property };
-    
-    if (transformed._id) {
-      transformed.id = transformed._id.toString();
-      delete transformed._id;
-    }
-    
-    return transformed;
+    return { ...property };
   }
 }
 

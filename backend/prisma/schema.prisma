@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+enum PropertyType {
+  apartment
+  villa
+  townhouse
+  penthouse
+  building
+  land
+}
+
+enum PropertyPurpose {
+  sale
+  rent
+}
+
+model User {
+  id                    String    @id @default(uuid()) @db.Uuid
+  email                 String    @unique @db.VarChar(255)
+  password              String    @db.VarChar(255)
+  firstName             String    @map("first_name") @db.VarChar(100)
+  lastName              String    @map("last_name") @db.VarChar(100)
+  phone                 String?   @db.VarChar(20)
+  emailVerified         Boolean   @default(false) @map("email_verified")
+  emailVerificationToken String?  @map("email_verification_token") @db.VarChar(255)
+  passwordResetToken    String?   @map("password_reset_token") @db.VarChar(255)
+  passwordResetExpires  DateTime? @map("password_reset_expires") @db.Timestamp
+  refreshToken          String?   @map("refresh_token") @db.Text
+  isActive              Boolean   @default(true) @map("is_active")
+  lastLogin             DateTime? @map("last_login") @db.Timestamp
+  avatar                String?   @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamp
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamp
+
+  properties Property[]
+
+  @@index([email])
+  @@index([emailVerificationToken])
+  @@index([passwordResetToken])
+  @@index([refreshToken])
+  @@map("users")
+}
+
+model Property {
+  id          String          @id @default(uuid()) @db.Uuid
+  title       String          @db.VarChar(255)
+  description String          @db.Text
+  price       Decimal         @db.Decimal(12, 2)
+  type        PropertyType
+  purpose     PropertyPurpose
+  location    String          @db.VarChar(255)
+  city        String          @db.VarChar(100)
+  area        String?         @db.VarChar(100)
+  bedrooms    Int?
+  bathrooms   Int?
+  parking     Int?
+  areaSize    Decimal?        @map("area_size") @db.Decimal(10, 2)
+  images      String[]        @default([])
+  contactName String?         @map("contact_name") @db.VarChar(100)
+  contactPhone String?        @map("contact_phone") @db.VarChar(20)
+  contactEmail String?        @map("contact_email") @db.VarChar(255)
+  userId      String          @map("user_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamp
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamp
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([purpose])
+  @@index([type])
+  @@index([city])
+  @@index([location])
+  @@index([price])
+  @@index([bedrooms])
+  @@index([bathrooms])
+  @@index([areaSize])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("properties")
+}
+

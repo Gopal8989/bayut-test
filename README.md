@@ -20,7 +20,7 @@ This project is a complete recreation of Bayut's core functionality, including:
 
 ### Backend
 - **Framework**: NestJS 10.x
-- **Database**: MongoDB with Mongoose
+- **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT with Passport.js (access + refresh tokens)
 - **Validation**: class-validator, class-transformer
 - **Documentation**: Swagger/OpenAPI
@@ -56,12 +56,11 @@ bayut-clone/
 │   │   │   └── strategies/    # Passport JWT strategy
 │   │   ├── property/          # Property CRUD operations
 │   │   │   ├── dto/           # Create, Filter, Contact DTOs
-│   │   │   ├── schemas/       # Mongoose schemas with indexes
-│   │   │   └── entities/      # Property entity
+│   │   │   └── dto/           # Create, Filter, Contact DTOs
 │   │   ├── user/              # User management
-│   │   │   ├── dto/           # Update profile DTO
-│   │   │   ├── schemas/       # User schema with indexes
-│   │   │   └── entities/      # User entity
+│   │   │   └── dto/           # Update profile DTO
+│   │   ├── prisma/            # Prisma ORM
+│   │   │   └── schema.prisma  # Database schema
 │   │   ├── upload/            # File upload handling
 │   │   ├── email/             # Email service with EJS templates
 │   │   │   └── templates/     # EJS email templates
@@ -116,7 +115,7 @@ bayut-clone/
 ### Prerequisites
 
 - **Node.js** 18+ and npm
-- **MongoDB** (local or Atlas)
+- **PostgreSQL** (local or cloud like Neon, Supabase, AWS RDS)
 - **Git**
 
 ### Quick Setup
@@ -200,9 +199,21 @@ Create `backend/.env` file with the following variables:
 PORT=3001
 NODE_ENV=development
 
-# Database
-MONGODB_URI=mongodb://localhost:27017/bayut_clone
-# For MongoDB Atlas: mongodb+srv://username:password@cluster.mongodb.net/bayut_clone
+# Database (PostgreSQL)
+# Option 1: Use DB_URL (recommended for production)
+DB_URL=postgresql://username:password@host:port/database
+# Example: DB_URL=postgresql://postgres:password@localhost:5432/bayut_clone
+# Example (Neon): DB_URL=postgresql://user:pass@host.neon.tech/db?sslmode=require
+
+# Option 2: Use individual variables (alternative)
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=bayut_clone
+DB_SSL=false
+# Note: If DB_URL is set, individual variables are ignored
+# For production PostgreSQL: Set DB_SSL=true and configure SSL certificates
 
 # JWT Authentication
 JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long-change-in-production
@@ -258,6 +269,12 @@ npm run build:clean        # Clean build (removes dist folder first)
 npm run start              # Start production server
 npm run start:prod         # Start production server (alias)
 npm run start:clean        # Clean build + start production
+
+# Prisma Commands
+npm run prisma:generate    # Generate Prisma Client
+npm run prisma:push        # Push schema to database (dev)
+npm run prisma:migrate     # Create and apply migration
+npm run prisma:studio      # Open Prisma Studio (database GUI)
 
 # Testing (if configured)
 npm test                   # Run tests
@@ -353,55 +370,50 @@ Interactive API documentation is available at `/api-docs` when the backend is ru
 
 ## 📊 Database Schema
 
-### User Schema
-```typescript
-{
-  email: string (unique, required, indexed)
-  password: string (hashed, required)
-  firstName: string (required)
-  lastName: string (required)
-  phone?: string
-  avatar?: string
-  emailVerified: boolean (default: false)
-  emailVerificationToken?: string (indexed)
-  passwordResetToken?: string (indexed)
-  passwordResetExpires?: Date
-  refreshToken?: string (indexed)
-  isActive: boolean (default: true)
-  lastLogin?: Date
-  createdAt: Date (auto)
-  updatedAt: Date (auto)
-}
-```
+The database schema is defined in `backend/prisma/schema.prisma` using Prisma ORM.
 
-### Property Schema
-```typescript
-{
-  userId: string (required, indexed, ObjectId ref: User)
-  title: string (required, text indexed)
-  description: string (required, text indexed)
-  price: number (required, indexed)
-  type: PropertyType (enum: apartment, villa, townhouse, penthouse, building, land, indexed)
-  purpose: PropertyPurpose (enum: sale, rent, indexed)
-  location: string (required, indexed)
-  city: string (required, indexed)
-  area?: string
-  bedrooms?: number (indexed)
-  bathrooms?: number (indexed)
-  parking?: number
-  areaSize?: number (indexed)
-  images: string[] (default: [])
-  contactName?: string
-  contactPhone?: string
-  contactEmail?: string
-  createdAt: Date (auto, indexed)
-  updatedAt: Date (auto)
-}
-```
+### User Model
+- `id`: UUID (Primary Key)
+- `email`: String (unique, indexed)
+- `password`: String (hashed)
+- `firstName`, `lastName`: String
+- `phone`: String (optional)
+- `emailVerified`: Boolean (default: false)
+- `emailVerificationToken`: String (indexed, optional)
+- `passwordResetToken`: String (indexed, optional)
+- `passwordResetExpires`: DateTime (optional)
+- `refreshToken`: String (indexed, optional)
+- `isActive`: Boolean (default: true)
+- `lastLogin`: DateTime (optional)
+- `avatar`: String (optional)
+- `createdAt`, `updatedAt`: DateTime (auto)
+
+### Property Model
+- `id`: UUID (Primary Key)
+- `userId`: UUID (Foreign Key → User, indexed)
+- `title`: String
+- `description`: String
+- `price`: Decimal (indexed)
+- `type`: PropertyType enum (indexed)
+- `purpose`: PropertyPurpose enum (indexed)
+- `location`: String (indexed)
+- `city`: String (indexed)
+- `area`: String (optional)
+- `bedrooms`: Int (indexed, optional)
+- `bathrooms`: Int (indexed, optional)
+- `parking`: Int (optional)
+- `areaSize`: Decimal (indexed, optional)
+- `images`: String[] (array)
+- `contactName`, `contactPhone`, `contactEmail`: String (optional)
+- `createdAt`, `updatedAt`: DateTime (auto)
 
 **Database Indexes:**
-- **Property**: `purpose`, `type`, `city`, `location`, `price`, `bedrooms`, `bathrooms`, `areaSize`, `userId`, `createdAt`, `title + description` (text search)
+- **Property**: `purpose`, `type`, `city`, `location`, `price`, `bedrooms`, `bathrooms`, `areaSize`, `userId`, `createdAt`
 - **User**: `email`, `emailVerificationToken`, `passwordResetToken`, `refreshToken`
+
+**Relationships:**
+- User has many Properties (One-to-Many)
+- Property belongs to User (Many-to-One with CASCADE delete)
 
 ## 🚢 Deployment
 
@@ -411,14 +423,15 @@ Interactive API documentation is available at `/api-docs` when the backend is ru
 1. Set `NODE_ENV=production`
 2. Use strong `JWT_SECRET` and `JWT_REFRESH_SECRET` (min 32 characters)
 3. Configure `ALLOWED_ORIGINS` with production frontend URL
-4. Set up MongoDB connection string (Atlas recommended)
-5. Configure email service (SMTP credentials)
-6. Set up log rotation
-7. Configure rate limits appropriately
-8. Enable HTTPS
-9. Set up monitoring and alerts
-10. Build: `npm run build:clean`
-11. Start: `npm run start:prod`
+4. Set up PostgreSQL database (use `DB_URL` in .env)
+5. Run Prisma migrations: `npm run prisma:migrate` (for production)
+6. Configure email service (SMTP credentials)
+7. Set up log rotation
+8. Configure rate limits appropriately
+9. Enable HTTPS
+10. Set up monitoring and alerts
+11. Build: `npm run build:clean`
+12. Start: `npm run start:prod`
 
 #### Frontend
 1. Set `NEXT_PUBLIC_API_URL` to production API URL
@@ -432,7 +445,7 @@ Interactive API documentation is available at `/api-docs` when the backend is ru
 ```env
 NODE_ENV=production
 PORT=3001
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/bayut_clone
+DB_URL=postgresql://user:pass@host:port/database
 JWT_SECRET=<strong-secret-32-chars-min>
 JWT_REFRESH_SECRET=<strong-secret-32-chars-min>
 ALLOWED_ORIGINS=https://yourdomain.com
@@ -465,7 +478,8 @@ npm test
 
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ## 🤝 Contributing

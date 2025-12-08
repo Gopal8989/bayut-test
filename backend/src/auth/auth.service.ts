@@ -59,18 +59,18 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
 
       // Update user with refresh token
-      await this.userService.updateRefreshToken(user._id.toString(), tokens.refresh_token);
+      await this.userService.updateRefreshToken(user.id, tokens.refresh_token);
 
       this.logger.info(`User registered successfully: ${user.email}`, {
         context: 'AuthService',
-        userId: user._id.toString(),
+        userId: user.id,
       });
 
       return {
         data: {
           ...tokens,
           user: {
-            id: user._id.toString(),
+            id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -105,7 +105,7 @@ export class AuthService {
     if (!isPasswordValid) {
       this.logger.warn(`Login failed: Invalid password for - ${loginDto.email}`, {
         context: 'AuthService',
-        userId: user._id.toString(),
+        userId: user.id,
       });
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -114,19 +114,19 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     // Update user with refresh token and last login
-    await this.userService.updateRefreshToken(user._id.toString(), tokens.refresh_token);
-    await this.userService.updateLastLogin(user._id.toString());
+    await this.userService.updateRefreshToken(user.id, tokens.refresh_token);
+    await this.userService.updateLastLogin(user.id);
 
     this.logger.info(`User logged in successfully: ${user.email}`, {
       context: 'AuthService',
-      userId: user._id.toString(),
+      userId: user.id,
     });
 
     return {
       data: {
         ...tokens,
         user: {
-          id: user._id.toString(),
+          id: user.id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
@@ -150,7 +150,7 @@ export class AuthService {
       }
 
       const tokens = await this.generateTokens(user);
-      await this.userService.updateRefreshToken(user._id.toString(), tokens.refresh_token);
+      await this.userService.updateRefreshToken(user.id, tokens.refresh_token);
 
       return {
         data: tokens,
@@ -180,7 +180,7 @@ export class AuthService {
     resetExpires.setHours(resetExpires.getHours() + 1);
 
     await this.userService.setPasswordResetToken(
-      user._id.toString(),
+      user.id,
       resetToken,
       resetExpires,
     );
@@ -213,8 +213,8 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    await this.userService.updatePassword(user._id.toString(), resetPasswordDto.newPassword);
-    await this.userService.clearPasswordResetToken(user._id.toString());
+    await this.userService.updatePassword(user.id, resetPasswordDto.newPassword);
+    await this.userService.clearPasswordResetToken(user.id);
 
     this.logger.info(`Password reset successful for user: ${user.email}`, {
       context: 'AuthService',
@@ -270,7 +270,7 @@ export class AuthService {
   }
 
   private async generateTokens(user: any) {
-    const payload = { email: user.email, sub: user._id.toString() };
+    const payload = { email: user.email, sub: user.id };
     
     const access_token = this.jwtService.sign(payload, {
       expiresIn: '15m', // 15 minutes

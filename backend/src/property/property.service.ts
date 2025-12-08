@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Property, PropertyDocument, PropertyType, PropertyPurpose } from './schemas/property.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { Property, Prisma, PropertyType, PropertyPurpose } from '@prisma/client';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { FilterPropertyDto } from './dto/filter-property.dto';
 import { LoggerService } from '../common/logger/logger.service';
@@ -23,8 +22,7 @@ export class PropertyService {
   private dbBreaker: CircuitBreakerInstance;
 
   constructor(
-    @InjectModel(Property.name)
-    private propertyModel: Model<PropertyDocument>,
+    private prisma: PrismaService,
     private logger: LoggerService,
     private cacheService: CacheService,
     private circuitBreakerService: CircuitBreakerService,
@@ -48,16 +46,26 @@ export class PropertyService {
     );
   }
 
-  async create(createPropertyDto: CreatePropertyDto): Promise<PropertyDocument> {
+  async create(createPropertyDto: CreatePropertyDto & { userId?: string }): Promise<Property> {
     try {
-      const property = await this.dbBreaker.fire(() => {
-        const property = new this.propertyModel(createPropertyDto);
-        return property.save();
+      const { userId, ...propertyData } = createPropertyDto;
+      
+      if (!userId) {
+        throw new Error('userId is required to create a property');
+      }
+
+      const property = await this.dbBreaker.fire(async () => {
+        return this.prisma.property.create({
+          data: {
+            ...propertyData,
+            userId,
+          },
+        });
       });
       
-      this.logger.info(`Property created: ${property._id}`, {
+      this.logger.info(`Property created: ${property.id}`, {
         context: 'PropertyService',
-        propertyId: property._id.toString(),
+        propertyId: property.id,
         title: property.title,
       });
 
@@ -73,10 +81,9 @@ export class PropertyService {
     }
   }
 
-  async findAll(filterDto?: FilterPropertyDto): Promise<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }> {
+  async findAll(filterDto?: FilterPropertyDto): Promise<{ data: Property[]; total: number; page: number; limit: number; totalPages: number }> {
     const startTime = Date.now();
     
-    // Pagination defaults
     const page = filterDto?.page || 1;
     const limit = filterDto?.limit || 12;
     const skip = (page - 1) * limit;
@@ -84,7 +91,7 @@ export class PropertyService {
     const cacheKey = `properties:${JSON.stringify(filterDto || {})}`;
 
     try {
-      const cached = await this.cacheService.get<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }>(cacheKey);
+      const cached = await this.cacheService.get<{ data: Property[]; total: number; page: number; limit: number; totalPages: number }>(cacheKey);
       if (cached) {
         this.metricsService.recordMetric('property.cache.hit', 1);
         return cached;
@@ -92,66 +99,65 @@ export class PropertyService {
 
       this.metricsService.recordMetric('property.cache.miss', 1);
 
-      const query: any = {};
+      const where: Prisma.PropertyWhereInput = {};
 
       if (filterDto) {
         if (filterDto.purpose) {
-          query.purpose = filterDto.purpose;
+          where.purpose = filterDto.purpose;
         }
 
         if (filterDto.type) {
-          query.type = filterDto.type;
+          where.type = filterDto.type;
         }
 
         if (filterDto.city) {
-          query.city = filterDto.city;
+          where.city = filterDto.city;
         }
 
         if (filterDto.location) {
-          query.location = filterDto.location;
+          where.location = filterDto.location;
         }
 
         if (filterDto.minPrice || filterDto.maxPrice) {
-          query.price = {};
+          where.price = {};
           if (filterDto.minPrice) {
-            query.price.$gte = filterDto.minPrice;
+            where.price.gte = filterDto.minPrice;
           }
           if (filterDto.maxPrice) {
-            query.price.$lte = filterDto.maxPrice;
+            where.price.lte = filterDto.maxPrice;
           }
         }
 
         if (filterDto.bedrooms) {
-          query.bedrooms = filterDto.bedrooms;
+          where.bedrooms = filterDto.bedrooms;
         }
 
         if (filterDto.bathrooms) {
-          query.bathrooms = filterDto.bathrooms;
+          where.bathrooms = filterDto.bathrooms;
         }
 
         if (filterDto.minAreaSize || filterDto.maxAreaSize) {
-          query.areaSize = {};
+          where.areaSize = {};
           if (filterDto.minAreaSize) {
-            query.areaSize.$gte = filterDto.minAreaSize;
+            where.areaSize.gte = filterDto.minAreaSize;
           }
           if (filterDto.maxAreaSize) {
-            query.areaSize.$lte = filterDto.maxAreaSize;
+            where.areaSize.lte = filterDto.maxAreaSize;
           }
         }
       }
 
-      const total = await this.dbBreaker.fire(() =>
-        this.propertyModel.countDocuments(query).exec(),
-      );
-
-      const properties = await this.dbBreaker.fire(() =>
-        this.propertyModel
-          .find(query)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .exec(),
-      );
+      const [total, properties] = await Promise.all([
+        this.dbBreaker.fire(() => this.prisma.property.count({ where })),
+        this.dbBreaker.fire(() =>
+          this.prisma.property.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { createdAt: 'desc' },
+          })
+        ),
+      ]);
 
       const totalPages = Math.ceil(total / limit);
 
@@ -190,17 +196,17 @@ export class PropertyService {
     }
   }
 
-  async findOne(id: string): Promise<PropertyDocument | null> {
+  async findOne(id: string): Promise<Property | null> {
     const cacheKey = `property:${id}`;
 
     try {
-      const cached = await this.cacheService.get<PropertyDocument>(cacheKey);
+      const cached = await this.cacheService.get<Property>(cacheKey);
       if (cached) {
         return cached;
       }
 
       const property = await this.dbBreaker.fire(() =>
-        this.propertyModel.findById(id).exec(),
+        this.prisma.property.findUnique({ where: { id } })
       );
 
       if (!property) {
@@ -224,18 +230,14 @@ export class PropertyService {
     }
   }
 
-  async update(id: string, updatePropertyDto: Partial<CreatePropertyDto>): Promise<PropertyDocument | null> {
+  async update(id: string, updatePropertyDto: Partial<CreatePropertyDto>): Promise<Property | null> {
     try {
       const property = await this.dbBreaker.fire(() =>
-        this.propertyModel.findByIdAndUpdate(id, updatePropertyDto, { new: true }).exec(),
+        this.prisma.property.update({
+          where: { id },
+          data: updatePropertyDto,
+        })
       );
-
-      if (!property) {
-        this.logger.warn(`Property not found for update: ${id}`, {
-          context: 'PropertyService',
-        });
-        throw new NotFoundException(`Property with ID ${id} not found`);
-      }
 
       await this.cacheService.del(`property:${id}`);
       await this.cacheService.del('properties:*');
@@ -249,8 +251,11 @@ export class PropertyService {
 
       return property;
     } catch (error: any) {
-      if (error instanceof NotFoundException) {
-        throw error;
+      if (error.code === 'P2025') {
+        this.logger.warn(`Property not found for update: ${id}`, {
+          context: 'PropertyService',
+        });
+        throw new NotFoundException(`Property with ID ${id} not found`);
       }
       this.logger.error(`Failed to update property: ${id}`, error.stack, {
         context: 'PropertyService',
@@ -261,16 +266,9 @@ export class PropertyService {
 
   async remove(id: string): Promise<void> {
     try {
-      const property = await this.dbBreaker.fire(() =>
-        this.propertyModel.findByIdAndDelete(id).exec(),
+      await this.dbBreaker.fire(() =>
+        this.prisma.property.delete({ where: { id } })
       );
-
-      if (!property) {
-        this.logger.warn(`Property not found for deletion: ${id}`, {
-          context: 'PropertyService',
-        });
-        throw new NotFoundException(`Property with ID ${id} not found`);
-      }
 
       await this.cacheService.del(`property:${id}`);
       await this.cacheService.del('properties:*');
@@ -282,8 +280,11 @@ export class PropertyService {
 
       this.metricsService.incrementCounter('property.deleted');
     } catch (error: any) {
-      if (error instanceof NotFoundException) {
-        throw error;
+      if (error.code === 'P2025') {
+        this.logger.warn(`Property not found for deletion: ${id}`, {
+          context: 'PropertyService',
+        });
+        throw new NotFoundException(`Property with ID ${id} not found`);
       }
       this.logger.error(`Failed to delete property: ${id}`, error.stack, {
         context: 'PropertyService',
@@ -294,7 +295,9 @@ export class PropertyService {
 
   async getCities(): Promise<string[]> {
     try {
-      const properties = await this.propertyModel.find().select('city').exec();
+      const properties = await this.prisma.property.findMany({
+        select: { city: true },
+      });
       if (!Array.isArray(properties)) {
         return [];
       }
@@ -309,7 +312,9 @@ export class PropertyService {
 
   async getLocations(): Promise<string[]> {
     try {
-      const properties = await this.propertyModel.find().select('location').exec();
+      const properties = await this.prisma.property.findMany({
+        select: { location: true },
+      });
       if (!Array.isArray(properties)) {
         return [];
       }
@@ -322,10 +327,9 @@ export class PropertyService {
     }
   }
 
-  async findByUserId(userId: string, filterDto?: FilterPropertyDto): Promise<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }> {
+  async findByUserId(userId: string, filterDto?: FilterPropertyDto): Promise<{ data: Property[]; total: number; page: number; limit: number; totalPages: number }> {
     const startTime = Date.now();
     
-    // Pagination defaults
     const page = filterDto?.page || 1;
     const limit = filterDto?.limit || 12;
     const skip = (page - 1) * limit;
@@ -333,7 +337,7 @@ export class PropertyService {
     const cacheKey = `properties:user:${userId}:${JSON.stringify(filterDto || {})}`;
 
     try {
-      const cached = await this.cacheService.get<{ data: PropertyDocument[]; total: number; page: number; limit: number; totalPages: number }>(cacheKey);
+      const cached = await this.cacheService.get<{ data: Property[]; total: number; page: number; limit: number; totalPages: number }>(cacheKey);
       if (cached) {
         this.metricsService.recordMetric('property.cache.hit', 1);
         return cached;
@@ -341,66 +345,65 @@ export class PropertyService {
 
       this.metricsService.recordMetric('property.cache.miss', 1);
 
-      const query: any = { userId };
+      const where: Prisma.PropertyWhereInput = { userId };
 
       if (filterDto) {
         if (filterDto.purpose) {
-          query.purpose = filterDto.purpose;
+          where.purpose = filterDto.purpose;
         }
 
         if (filterDto.type) {
-          query.type = filterDto.type;
+          where.type = filterDto.type;
         }
 
         if (filterDto.city) {
-          query.city = filterDto.city;
+          where.city = filterDto.city;
         }
 
         if (filterDto.location) {
-          query.location = filterDto.location;
+          where.location = filterDto.location;
         }
 
         if (filterDto.minPrice || filterDto.maxPrice) {
-          query.price = {};
+          where.price = {};
           if (filterDto.minPrice) {
-            query.price.$gte = filterDto.minPrice;
+            where.price.gte = filterDto.minPrice;
           }
           if (filterDto.maxPrice) {
-            query.price.$lte = filterDto.maxPrice;
+            where.price.lte = filterDto.maxPrice;
           }
         }
 
         if (filterDto.bedrooms) {
-          query.bedrooms = filterDto.bedrooms;
+          where.bedrooms = filterDto.bedrooms;
         }
 
         if (filterDto.bathrooms) {
-          query.bathrooms = filterDto.bathrooms;
+          where.bathrooms = filterDto.bathrooms;
         }
 
         if (filterDto.minAreaSize || filterDto.maxAreaSize) {
-          query.areaSize = {};
+          where.areaSize = {};
           if (filterDto.minAreaSize) {
-            query.areaSize.$gte = filterDto.minAreaSize;
+            where.areaSize.gte = filterDto.minAreaSize;
           }
           if (filterDto.maxAreaSize) {
-            query.areaSize.$lte = filterDto.maxAreaSize;
+            where.areaSize.lte = filterDto.maxAreaSize;
           }
         }
       }
 
-      const total = await this.dbBreaker.fire(() =>
-        this.propertyModel.countDocuments(query).exec(),
-      );
-
-      const properties = await this.dbBreaker.fire(() =>
-        this.propertyModel
-          .find(query)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .exec(),
-      );
+      const [total, properties] = await Promise.all([
+        this.dbBreaker.fire(() => this.prisma.property.count({ where })),
+        this.dbBreaker.fire(() =>
+          this.prisma.property.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { createdAt: 'desc' },
+          })
+        ),
+      ]);
 
       const totalPages = Math.ceil(total / limit);
 
@@ -437,4 +440,3 @@ export class PropertyService {
     }
   }
 }
-
